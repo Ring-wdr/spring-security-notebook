@@ -1,6 +1,4 @@
-"use client";
-
-import { useAuth } from "@/components/auth-provider";
+import { Suspense } from "react";
 import Link from "next/link";
 
 const DEMO_ACCOUNTS = [
@@ -9,9 +7,10 @@ const DEMO_ACCOUNTS = [
   { label: "Admin", email: "admin@example.com", role: "ROLE_ADMIN" },
 ];
 
-export default function Home() {
-  const { session, status } = useAuth();
+import { getOptionalSession } from "@/lib/server/session";
+import type { StoredSession } from "@/lib/types";
 
+export default function Home() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.45fr_0.95fr]">
       <section className="panel space-y-6">
@@ -51,64 +50,79 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="panel space-y-6">
-        <div className="space-y-3">
-          <p className="eyebrow">Current Session</p>
-          <h2 className="text-2xl font-semibold">Auth state snapshot</h2>
-          <p className="text-sm leading-7 text-[color:var(--muted-foreground)]">
-            Use the demo credentials from the backend initializer. Password for
-            all accounts is <strong>1111</strong>.
-          </p>
-        </div>
+      <Suspense fallback={<SessionSnapshotCard session={null} />}>
+        <SessionSnapshot />
+      </Suspense>
+    </div>
+  );
+}
 
-        <div className="rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-5">
-          <p className="text-sm font-medium text-[color:var(--muted-foreground)]">
-            Status
+async function SessionSnapshot() {
+  const session = await getOptionalSession();
+  return <SessionSnapshotCard session={session} />;
+}
+
+function SessionSnapshotCard({ session }: { session: StoredSession | null }) {
+  return (
+    <section className="panel space-y-6">
+      <div className="space-y-3">
+        <p className="eyebrow">Current Session</p>
+        <h2 className="text-2xl font-semibold">Auth state snapshot</h2>
+        <p className="text-sm leading-7 text-[color:var(--muted-foreground)]">
+          Use the demo credentials from the backend initializer. Password for
+          all accounts is <strong>1111</strong>.
+        </p>
+      </div>
+
+      <div className="rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-5">
+        <p className="text-sm font-medium text-[color:var(--muted-foreground)]">
+          Status
+        </p>
+        <p className="mt-2 text-2xl font-semibold capitalize">
+          {session ? "authenticated" : "anonymous"}
+        </p>
+        {session?.user ? (
+          <div className="mt-4 space-y-3 text-sm">
+            <div>
+              <p className="font-medium">{session.user.nickname}</p>
+              <p className="text-[color:var(--muted-foreground)]">
+                {session.user.email}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {session.user.roleNames.map((role) => (
+                <span key={role} className="badge">
+                  {role}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">
+            No authenticated profile is loaded yet.
           </p>
-          <p className="mt-2 text-2xl font-semibold capitalize">{status}</p>
-          {session?.user ? (
-            <div className="mt-4 space-y-3 text-sm">
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {DEMO_ACCOUNTS.map((account) => (
+          <div
+            key={account.email}
+            className="rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-4"
+          >
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-medium">{session.user.nickname}</p>
-                <p className="text-[color:var(--muted-foreground)]">
-                  {session.user.email}
+                <p className="font-medium">{account.label}</p>
+                <p className="text-sm text-[color:var(--muted-foreground)]">
+                  {account.email}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {session.user.roleNames.map((role) => (
-                  <span key={role} className="badge">
-                    {role}
-                  </span>
-                ))}
-              </div>
+              <span className="badge">{account.role}</span>
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-[color:var(--muted-foreground)]">
-              No authenticated profile is loaded yet.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          {DEMO_ACCOUNTS.map((account) => (
-            <div
-              key={account.email}
-              className="rounded-[22px] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-4"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{account.label}</p>
-                  <p className="text-sm text-[color:var(--muted-foreground)]">
-                    {account.email}
-                  </p>
-                </div>
-                <span className="badge">{account.role}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

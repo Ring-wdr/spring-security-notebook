@@ -1,34 +1,12 @@
-"use client";
-
-import { useAuth } from "@/components/auth-provider";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+
+import { logoutAction } from "@/app/actions/session";
+import { ActiveNavLink } from "@/components/active-nav-link";
+import { getOptionalSession } from "@/lib/server/session";
+import type { StoredSession } from "@/lib/types";
 
 export function AppFrame({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { logout, session, status } = useAuth();
-  const roleNames = session?.user?.roleNames ?? [];
-
-  const navItems = [
-    { href: "/", label: "Overview", visible: true },
-    { href: "/login", label: "Login", visible: status !== "authenticated" },
-    { href: "/me", label: "My Profile", visible: status === "authenticated" },
-    { href: "/content", label: "Contents", visible: status === "authenticated" },
-    {
-      href: "/manage/content",
-      label: "Manage Content",
-      visible:
-        status === "authenticated" &&
-        roleNames.some((role) => role === "ROLE_MANAGER" || role === "ROLE_ADMIN"),
-    },
-    {
-      href: "/manage/users",
-      label: "Manage Users",
-      visible: status === "authenticated" && roleNames.includes("ROLE_ADMIN"),
-    },
-  ].filter((item) => item.visible);
-
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(226,153,65,0.22),_transparent_28%),linear-gradient(180deg,_var(--page-top),_var(--page-bottom))] text-[color:var(--foreground)]">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--surface-strong)]/95 backdrop-blur">
@@ -41,38 +19,71 @@ export function AppFrame({ children }: { children: ReactNode }) {
               Subscriber Content Hub
             </p>
           </div>
-          <nav className="flex flex-wrap items-center justify-end gap-2">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-full px-4 py-2 text-sm transition ${
-                    active
-                      ? "bg-[color:var(--accent)] text-[color:var(--accent-foreground)]"
-                      : "text-[color:var(--muted-foreground)] hover:bg-[color:var(--surface)] hover:text-[color:var(--foreground)]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-            {status === "authenticated" ? (
-              <button
-                type="button"
-                onClick={() => void logout()}
-                className="rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm text-[color:var(--foreground)] transition hover:bg-[color:var(--surface)]"
-              >
-                Logout
-              </button>
-            ) : null}
-          </nav>
+          <Suspense fallback={<Navigation session={null} />}>
+            <SessionNavigation />
+          </Suspense>
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-10">
         {children}
       </main>
     </div>
+  );
+}
+
+async function SessionNavigation() {
+  const session = await getOptionalSession();
+  return <Navigation session={session} />;
+}
+
+function Navigation({ session }: { session: StoredSession | null }) {
+  const roleNames = session?.user?.roleNames ?? [];
+  const navItems = [
+    { href: "/", label: "Overview", visible: true },
+    { href: "/login", label: "Login", visible: !session },
+    { href: "/me", label: "My Profile", visible: Boolean(session) },
+    { href: "/content", label: "Contents", visible: Boolean(session) },
+    {
+      href: "/manage/content",
+      label: "Manage Content",
+      visible: roleNames.some(
+        (role) => role === "ROLE_MANAGER" || role === "ROLE_ADMIN",
+      ),
+    },
+    {
+      href: "/manage/users",
+      label: "Manage Users",
+      visible: roleNames.includes("ROLE_ADMIN"),
+    },
+  ].filter((item) => item.visible);
+
+  return (
+    <nav className="flex flex-wrap items-center justify-end gap-2">
+      {navItems.map((item) => (
+        <Suspense
+          key={item.href}
+          fallback={
+            <Link
+              href={item.href}
+              className="rounded-full px-4 py-2 text-sm text-[color:var(--muted-foreground)] transition hover:bg-[color:var(--surface)] hover:text-[color:var(--foreground)]"
+            >
+              {item.label}
+            </Link>
+          }
+        >
+          <ActiveNavLink href={item.href} label={item.label} />
+        </Suspense>
+      ))}
+      {session ? (
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm text-[color:var(--foreground)] transition hover:bg-[color:var(--surface)]"
+          >
+            Logout
+          </button>
+        </form>
+      ) : null}
+    </nav>
   );
 }
