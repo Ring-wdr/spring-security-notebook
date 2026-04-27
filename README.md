@@ -1,5 +1,17 @@
 # Spring Security Notebook
 
+![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot 4.0.6](https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-Auth-6DB33F?logo=springsecurity&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-0.12.7-000000?logo=jsonwebtokens&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-4169E1?logo=postgresql&logoColor=white)
+![Valkey](https://img.shields.io/badge/Valkey-Cache-FF4438?logo=redis&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-Build-C71A36?logo=apachemaven&logoColor=white)
+![Next.js 16.2.4](https://img.shields.io/badge/Next.js-16.2.4-000000?logo=nextdotjs&logoColor=white)
+![React 19.2.4](https://img.shields.io/badge/React-19.2.4-149ECA?logo=react&logoColor=white)
+![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS 4](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+
 이 저장소는 `Spring Boot + Next.js(React)` 기반 프로젝트로 Spring Security 클린 패턴을 실습하고 정리하기 위한 학습용 레포지토리입니다. 문서 학습에 그치지 않고, 백엔드 인증 구조와 프론트엔드 인증 흐름을 함께 연결해 보면서 `Spring Security + JWT` 아키텍처를 단계적으로 구현하는 것을 목표로 합니다.
 
 ## Project Goal
@@ -60,39 +72,39 @@ spring-security-notebook/
 
 ## Study Materials
 
-- 핵심 요약 가이드: [spring-security-architecture-jwt-study-guide.md](/D:/spring-security-notebook/docs/spring-security-architecture-jwt-study-guide.md)
-- 강의 구현 audit: [spring-security-lecture-gap-audit.md](/D:/spring-security-notebook/docs/spring-security-lecture-gap-audit.md)
-- 구현 설계 문서: [2026-04-27-spring-security-lecture-gap-audit-design.md](/D:/spring-security-notebook/docs/superpowers/specs/2026-04-27-spring-security-lecture-gap-audit-design.md)
+- 핵심 요약 가이드: [spring-security-architecture-jwt-study-guide.md](docs/spring-security-architecture-jwt-study-guide.md)
+- 강의 구현 audit: [spring-security-lecture-gap-audit.md](docs/spring-security-lecture-gap-audit.md)
+- 구현 설계 문서: [2026-04-27-spring-security-lecture-gap-audit-design.md](docs/superpowers/specs/2026-04-27-spring-security-lecture-gap-audit-design.md)
 - 단계별 실습 문서:
-  - [01-concepts-and-architecture.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md)
-  - [02-security-config.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/02-security-config.md)
-  - [03-user-entity-repository-test.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/03-user-entity-repository-test.md)
-  - [04-userdetails-and-userservice.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/04-userdetails-and-userservice.md)
-  - [05-success-failure-handler-and-jwt-creation.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/05-success-failure-handler-and-jwt-creation.md)
-  - [06-jwt-authentication-filter.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/06-jwt-authentication-filter.md)
-  - [07-bearer-token-testing-and-review.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/07-bearer-token-testing-and-review.md)
-  - [08-jwt-payload-and-error-handling.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/08-jwt-payload-and-error-handling.md)
-  - [09-refresh-token-controller.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/09-refresh-token-controller.md)
-  - [10-final-review.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/10-final-review.md)
+  - [01-concepts-and-architecture.md](docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md)
+  - [02-security-config.md](docs/spring-security-notebooklm-docs/02-security-config.md)
+  - [03-user-entity-repository-test.md](docs/spring-security-notebooklm-docs/03-user-entity-repository-test.md)
+  - [04-userdetails-and-userservice.md](docs/spring-security-notebooklm-docs/04-userdetails-and-userservice.md)
+  - [05-success-failure-handler-and-jwt-creation.md](docs/spring-security-notebooklm-docs/05-success-failure-handler-and-jwt-creation.md)
+  - [06-jwt-authentication-filter.md](docs/spring-security-notebooklm-docs/06-jwt-authentication-filter.md)
+  - [07-bearer-token-testing-and-review.md](docs/spring-security-notebooklm-docs/07-bearer-token-testing-and-review.md)
+  - [08-jwt-payload-and-error-handling.md](docs/spring-security-notebooklm-docs/08-jwt-payload-and-error-handling.md)
+  - [09-refresh-token-controller.md](docs/spring-security-notebooklm-docs/09-refresh-token-controller.md)
+  - [10-final-review.md](docs/spring-security-notebooklm-docs/10-final-review.md)
 
 ## Development Order
 
 실습은 아래 순서대로 진행합니다.
 
-1. [01-concepts-and-architecture.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md): 전체 인증/인가 구조 이해
-2. [02-security-config.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/02-security-config.md): `SecurityConfig`, CORS, CSRF, 세션 정책 구성
-3. [03-user-entity-repository-test.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/03-user-entity-repository-test.md): 사용자 엔티티, 리포지토리, 테스트 기반 준비
-4. [04-userdetails-and-userservice.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/04-userdetails-and-userservice.md): Security World와 사용자 도메인 연결
-5. [05-success-failure-handler-and-jwt-creation.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/05-success-failure-handler-and-jwt-creation.md): 로그인 성공/실패 처리와 JWT 발급
-6. [06-jwt-authentication-filter.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/06-jwt-authentication-filter.md): 요청 필터에서 JWT 인증 처리
-7. [07-bearer-token-testing-and-review.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/07-bearer-token-testing-and-review.md): Bearer 토큰 테스트와 흐름 점검
-8. [08-jwt-payload-and-error-handling.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/08-jwt-payload-and-error-handling.md): JWT payload 설계와 예외 응답 정리
-9. [09-refresh-token-controller.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/09-refresh-token-controller.md): Refresh Token 재발급 흐름 구현
-10. [10-final-review.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/10-final-review.md): 전체 아키텍처 복습과 마무리 점검
+1. [01-concepts-and-architecture.md](docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md): 전체 인증/인가 구조 이해
+2. [02-security-config.md](docs/spring-security-notebooklm-docs/02-security-config.md): `SecurityConfig`, CORS, CSRF, 세션 정책 구성
+3. [03-user-entity-repository-test.md](docs/spring-security-notebooklm-docs/03-user-entity-repository-test.md): 사용자 엔티티, 리포지토리, 테스트 기반 준비
+4. [04-userdetails-and-userservice.md](docs/spring-security-notebooklm-docs/04-userdetails-and-userservice.md): Security World와 사용자 도메인 연결
+5. [05-success-failure-handler-and-jwt-creation.md](docs/spring-security-notebooklm-docs/05-success-failure-handler-and-jwt-creation.md): 로그인 성공/실패 처리와 JWT 발급
+6. [06-jwt-authentication-filter.md](docs/spring-security-notebooklm-docs/06-jwt-authentication-filter.md): 요청 필터에서 JWT 인증 처리
+7. [07-bearer-token-testing-and-review.md](docs/spring-security-notebooklm-docs/07-bearer-token-testing-and-review.md): Bearer 토큰 테스트와 흐름 점검
+8. [08-jwt-payload-and-error-handling.md](docs/spring-security-notebooklm-docs/08-jwt-payload-and-error-handling.md): JWT payload 설계와 예외 응답 정리
+9. [09-refresh-token-controller.md](docs/spring-security-notebooklm-docs/09-refresh-token-controller.md): Refresh Token 재발급 흐름 구현
+10. [10-final-review.md](docs/spring-security-notebooklm-docs/10-final-review.md): 전체 아키텍처 복습과 마무리 점검
 
 ## Recommended Learning Flow
 
-1. 먼저 [spring-security-architecture-jwt-study-guide.md](/D:/spring-security-notebook/docs/spring-security-architecture-jwt-study-guide.md)로 전체 구조를 훑습니다.
+1. 먼저 [spring-security-architecture-jwt-study-guide.md](docs/spring-security-architecture-jwt-study-guide.md)로 전체 구조를 훑습니다.
 2. 이후 `docs/spring-security-notebooklm-docs/` 문서를 번호 순서대로 따라가며 구현합니다.
 3. 백엔드 인증 흐름과 Next.js 프론트엔드 인증 흐름을 함께 연결해서 점검합니다.
 4. 마지막에는 JWT 발급, 인증 필터, Refresh Token, 예외 처리, 테스트 흐름을 하나의 시스템으로 복습합니다.
@@ -140,4 +152,4 @@ spring-security-notebook/
 - `notebooklm` 스킬은 학습 자료 요약, 보충 설명, 질의응답, 실습용 아티팩트 생성에 사용합니다.
 - 프론트엔드 현대화 작업은 repo-local `modernize-next-react19` 스킬을 우선 사용하고, 브라우저 확인이 필요할 때 그 흐름 안에서 `next-browser`를 사용합니다.
 - 개인정보 또는 계정 식별에 해당하는 notebook id, 인증 정보, 로컬 계정 정보는 문서에 기록하지 않습니다.
-- 스킬 호출 여부와 운영 규칙은 [AGENTS.md](/D:/spring-security-notebook/AGENTS.md)에서 관리합니다.
+- 스킬 호출 여부와 운영 규칙은 [AGENTS.md](AGENTS.md)에서 관리합니다.

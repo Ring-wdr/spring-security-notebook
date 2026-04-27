@@ -69,7 +69,7 @@
 
 ## Suggested Walkthrough
 
-1. [01-concepts-and-architecture.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md)부터 [10-final-review.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/10-final-review.md)까지 문서 순서를 훑는다.
+1. [01-concepts-and-architecture.md](spring-security-notebooklm-docs/01-concepts-and-architecture.md)부터 [10-final-review.md](spring-security-notebooklm-docs/10-final-review.md)까지 문서 순서를 훑는다.
 2. 브라우저에서 `/learn`를 열어 현재 auth 상태와 강의별 체크포인트를 확인한다.
 3. `/login`으로 로그인한 뒤 `/me`, `/content`, `/manage/content`, `/manage/users`를 순서대로 열어 role 기반 차이를 확인한다.
 4. 마지막으로 backend / frontend 테스트를 돌려 학습용 계약이 코드 수준에서도 유지되는지 검증한다.
