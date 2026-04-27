@@ -24,8 +24,22 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
+    public List<ContentSummaryResponse> getAllContents() {
+        return contentRepository.findAllByOrderByIdDesc().stream()
+                .map(ContentSummaryResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ContentDetailResponse getPublishedContent(Long contentId) {
         Content content = contentRepository.findByIdAndPublishedTrue(contentId)
+                .orElseThrow(() -> new ResourceNotFoundException("ERROR_CONTENT_NOT_FOUND"));
+        return ContentDetailResponse.from(content);
+    }
+
+    @Transactional(readOnly = true)
+    public ContentDetailResponse getAnyContent(Long contentId) {
+        Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new ResourceNotFoundException("ERROR_CONTENT_NOT_FOUND"));
         return ContentDetailResponse.from(content);
     }

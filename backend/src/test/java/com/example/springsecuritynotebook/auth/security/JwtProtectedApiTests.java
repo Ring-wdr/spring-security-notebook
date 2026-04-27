@@ -108,6 +108,31 @@ class JwtProtectedApiTests {
                 .andExpect(jsonPath("$.roleNames[0]").value("ROLE_USER"));
     }
 
+    @Test
+    void managerCanRequestAllContentsIncludingDrafts() throws Exception {
+        Subscriber manager = Subscriber.builder()
+                .email("manager@example.com")
+                .password(passwordEncoder.encode("1111"))
+                .nickname("manager")
+                .build();
+        manager.addRole(SubscriberRole.ROLE_MANAGER);
+        subscriberRepository.save(manager);
+        contentRepository.save(Content.builder()
+                .title("Draft Content")
+                .body("draft")
+                .category("draft")
+                .published(false)
+                .build());
+
+        String managerToken = loginAndExtractToken("manager@example.com", "1111");
+
+        mockMvc.perform(get("/api/content")
+                        .queryParam("includeAll", "true")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].published").exists());
+    }
+
     private String loginAndExtractToken(String email, String password) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .param("email", email)

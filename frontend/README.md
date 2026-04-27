@@ -29,6 +29,11 @@ frontend/
 - 린트: `npm run lint`
 - 프로덕션 빌드: `npm run build`
 
+## Environment
+
+- API base URL 예시는 `frontend/.env.example`에 둡니다.
+- 기본값은 `http://localhost:8080`이며, 로컬 backend와 직접 연결됩니다.
+
 ## Notes
 
 - 이 프론트엔드는 React 기반이지만, 구조는 Next.js App Router 기준으로 진행합니다.
