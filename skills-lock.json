@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "java-springboot": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "f1b9c6b1277178fc33e5a612761c1cd1cf6ab5f946d05d69d52026d142c0a0c1"
+    },
+    "next-browser": {
+      "source": "vercel-labs/next-browser",
+      "sourceType": "github",
+      "computedHash": "d8e316eaad3004a1de8f6f4e1b1f774a180a65f22bc821ec07eb492a3f2689ae"
+    }
+  }
+}

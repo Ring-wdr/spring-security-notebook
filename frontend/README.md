@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend Workspace
 
-## Getting Started
+이 디렉터리는 `create-next-app` 공식 템플릿으로 생성한 Next.js 프론트엔드 실습 영역입니다.
 
-First, run the development server:
+## Current Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js `16.2.4`
+- React `19`
+- TypeScript
+- App Router
+- ESLint
+- Tailwind CSS
+
+## Key Structure
+
+```text
+frontend/
+├─ src/app/
+├─ public/
+├─ package.json
+├─ next.config.ts
+├─ tsconfig.json
+└─ eslint.config.mjs
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Verification
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 개발 서버: `npm run dev`
+- 린트: `npm run lint`
+- 프로덕션 빌드: `npm run build`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 이 프론트엔드는 React 기반이지만, 구조는 Next.js App Router 기준으로 진행합니다.
+- 백엔드 Spring Security/JWT 흐름과 연결되는 로그인 화면, 인증 상태 관리, 보호된 페이지 흐름을 단계적으로 추가합니다.
+- `next-browser` 스킬 활용을 고려해 Next.js 공식 템플릿 구조를 유지합니다.
