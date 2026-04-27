@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { BackendRequestError, executeBackendRequest } from "./backend-auth";
 import { readSessionCookie } from "./session-cookie";
+import { buildRefreshSessionRedirectPath } from "./refresh-session";
 import type { CurrentUser, StoredSession } from "../types";
 
 const API_BASE_URL =
@@ -13,48 +14,65 @@ export type AuthenticatedSession = StoredSession & {
   user: CurrentUser;
 };
 
-export const getOptionalSession = cache(async (): Promise<AuthenticatedSession | null> => {
+type SessionState =
+  | { kind: "anonymous" }
+  | { kind: "authenticated"; session: AuthenticatedSession }
+  | { kind: "stale" };
+
+const getSessionState = cache(async (): Promise<SessionState> => {
   const cookieStore = await cookies();
   const tokens = readSessionCookie(cookieStore);
   if (!tokens) {
-    return null;
+    return { kind: "anonymous" };
   }
-
-  let nextTokens = tokens;
 
   try {
     const user = await executeBackendRequest<CurrentUser>({
       baseUrl: API_BASE_URL,
       path: "/api/users/me",
       tokens,
-      onTokensRotated(rotatedTokens) {
-        nextTokens = rotatedTokens;
-      },
+      skipRefresh: true,
     });
 
     return {
-      tokens: nextTokens,
-      user,
+      kind: "authenticated",
+      session: {
+        tokens,
+        user,
+      },
     };
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof BackendRequestError && error.status === 401) {
+      return { kind: "stale" };
+    }
+    return { kind: "anonymous" };
   }
 });
 
-export async function requireSession(): Promise<AuthenticatedSession> {
-  const session = await getOptionalSession();
-  if (!session) {
+export const getOptionalSession = cache(async (): Promise<AuthenticatedSession | null> => {
+  const sessionState = await getSessionState();
+  return sessionState.kind === "authenticated" ? sessionState.session : null;
+});
+
+export async function requireSession(returnTo: string): Promise<AuthenticatedSession> {
+  const sessionState = await getSessionState();
+  if (sessionState.kind === "anonymous") {
     redirect("/login");
   }
 
-  return session;
+  if (sessionState.kind === "stale") {
+    redirect(buildRefreshSessionRedirectPath(returnTo));
+  }
+
+  return sessionState.session;
 }
 
 export async function fetchProtectedJson<T>(
   path: string,
+  returnTo: string,
   init?: RequestInit,
 ): Promise<T> {
-  const session = await requireSession();
+  const session = await requireSession(returnTo);
 
   try {
     return await executeBackendRequest<T>({
@@ -62,10 +80,11 @@ export async function fetchProtectedJson<T>(
       path,
       init,
       tokens: session.tokens,
+      skipRefresh: true,
     });
   } catch (error) {
     if (error instanceof BackendRequestError && error.status === 401) {
-      redirect("/login");
+      redirect(buildRefreshSessionRedirectPath(returnTo));
     }
     throw error;
   }

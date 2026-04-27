@@ -22,7 +22,7 @@ export default function ManageUsersPage() {
 }
 
 async function ManageUsersWorkspace() {
-  const session = await requireSession();
+  const session = await requireSession("/manage/users");
 
   if (!hasAnyRole(session, ["ROLE_ADMIN"])) {
     return (
@@ -33,6 +33,9 @@ async function ManageUsersWorkspace() {
     );
   }
 
-  const users = await fetchProtectedJson<SubscriberSummary[]>("/api/admin/users");
+  const users = await fetchProtectedJson<SubscriberSummary[]>(
+    "/api/admin/users",
+    "/manage/users",
+  );
   return <ManageUsersClient initialUsers={users} />;
 }

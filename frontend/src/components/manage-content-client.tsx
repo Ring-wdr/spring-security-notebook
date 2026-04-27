@@ -1,6 +1,6 @@
 "use client";
 
-import { apiRequest } from "@/lib/api-client";
+import { ApiClientError, apiRequest } from "@/lib/api-client";
 import type { ContentDetail, ContentSummary } from "@/lib/types";
 import { type FormEvent, useState } from "react";
 
@@ -30,7 +30,7 @@ export function ManageContentClient({
   const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   async function reloadContents() {
     const response = await apiRequest<ContentSummary[]>(
@@ -55,7 +55,7 @@ export function ManageContentClient({
       });
       setMessage(null);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "ERROR_CONTENT");
+      setError(toContentError(nextError));
     } finally {
       setLoadingDetailId(null);
     }
@@ -92,7 +92,7 @@ export function ManageContentClient({
       setEditor(EMPTY_EDITOR);
       await reloadContents();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "ERROR_CONTENT");
+      setError(toContentError(nextError));
     } finally {
       setSaving(false);
     }
@@ -165,7 +165,12 @@ export function ManageContentClient({
           {message ? (
             <p className="text-sm text-[color:var(--accent)]">{message}</p>
           ) : null}
-          {error ? <p className="text-sm text-[color:var(--warn)]">{error}</p> : null}
+          {error ? (
+            <div className="text-sm text-[color:var(--warn)]">
+              <p className="font-semibold">{error.code}</p>
+              <p className="mt-1">{error.message}</p>
+            </div>
+          ) : null}
         </form>
       </section>
 
@@ -201,4 +206,18 @@ export function ManageContentClient({
       </section>
     </div>
   );
+}
+
+function toContentError(error: unknown) {
+  if (error instanceof ApiClientError) {
+    return {
+      code: error.code,
+      message: error.displayMessage,
+    };
+  }
+
+  return {
+    code: "ERROR_CONTENT",
+    message: "Unable to complete the content request.",
+  };
 }

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { createDisplayError } from "../auth-errors";
 import { BackendRequestError, executeBackendRequest } from "./backend-auth";
 import { clearSessionCookie, readSessionCookie, writeSessionCookie } from "./session-cookie";
 import { getApiBaseUrl } from "./session";
@@ -13,8 +14,9 @@ export async function proxyJsonRequest<T>(
   const tokens = readSessionCookie(cookieStore);
 
   if (!tokens) {
+    const displayError = createDisplayError("ERROR_UNAUTHORIZED");
     const response = NextResponse.json(
-      { error: "AUTHENTICATION_REQUIRED" },
+      { error: displayError.code, message: displayError.message },
       { status: 401 },
     );
     clearSessionCookie(response.cookies);
@@ -51,7 +53,11 @@ export async function proxyJsonRequest<T>(
       {
         error:
           error instanceof BackendRequestError
-            ? error.message
+            ? error.code
+            : "INTERNAL_SERVER_ERROR",
+        message:
+          error instanceof BackendRequestError
+            ? error.displayMessage
             : "INTERNAL_SERVER_ERROR",
       },
       {

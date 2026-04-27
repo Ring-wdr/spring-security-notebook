@@ -1,26 +1,55 @@
 import { Suspense } from "react";
-
-import { LoginForm } from "@/components/login-form";
-import { getOptionalSession } from "@/lib/server/session";
 import { redirect } from "next/navigation";
 
-export default function LoginPage() {
+import { LoginForm } from "@/components/login-form";
+import { createDisplayError, getErrorCode } from "@/lib/auth-errors";
+import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
+import { getOptionalSession } from "@/lib/server/session";
+import { cookies } from "next/headers";
+import { readSessionCookie } from "@/lib/server/session-cookie";
+
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
   return (
     <Suspense fallback={<LoginLayout />}>
-      <LoginGate />
+      <LoginGate searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function LoginGate() {
+async function LoginGate({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
   if (await getOptionalSession()) {
     redirect("/me");
   }
 
-  return <LoginLayout />;
+  const cookieStore = await cookies();
+  if (readSessionCookie(cookieStore)) {
+    redirect(buildRefreshSessionRedirectPath("/me"));
+  }
+
+  const params = await searchParams;
+  const errorCode = getErrorCode(params.error);
+  return (
+    <LoginLayout
+      initialError={
+        errorCode ? createDisplayError(errorCode) : null
+      }
+    />
+  );
 }
 
-function LoginLayout() {
+function LoginLayout({
+  initialError = null,
+}: {
+  initialError?: { code: string; message: string } | null;
+}) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="panel space-y-6">
@@ -33,7 +62,7 @@ function LoginLayout() {
             token.
           </p>
         </div>
-        <LoginForm />
+        <LoginForm initialError={initialError} />
       </section>
 
       <section className="panel space-y-4">

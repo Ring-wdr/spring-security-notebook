@@ -1,6 +1,6 @@
 "use client";
 
-import { apiRequest } from "@/lib/api-client";
+import { ApiClientError, apiRequest } from "@/lib/api-client";
 import type { SubscriberSummary } from "@/lib/types";
 import { startTransition, useOptimistic, useState } from "react";
 
@@ -40,7 +40,7 @@ export function ManageUsersClient({
       }),
   );
   const [savingEmail, setSavingEmail] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   async function reloadUsers() {
     const response = await apiRequest<SubscriberSummary[]>("/api/admin/users");
@@ -73,7 +73,10 @@ export function ManageUsersClient({
       .find((user) => user.email === email);
 
     if (!nextUser || nextUser.roleNames.length === 0) {
-      setError("At least one role must remain assigned.");
+      setError({
+        code: "ERROR_BAD_REQUEST",
+        message: "At least one role must remain assigned.",
+      });
       return;
     }
 
@@ -92,7 +95,7 @@ export function ManageUsersClient({
         current.map((user) => (user.email === email ? response : user)),
       );
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "ERROR_USERS");
+      setError(toUserError(nextError));
       await reloadUsers();
     } finally {
       setSavingEmail(null);
@@ -112,7 +115,8 @@ export function ManageUsersClient({
       </div>
       {error ? (
         <div className="rounded-[20px] border border-[color:var(--warn)]/35 bg-[color:var(--warn)]/12 px-4 py-3 text-sm text-[color:var(--warn)]">
-          {error}
+          <p className="font-semibold">{error.code}</p>
+          <p className="mt-1">{error.message}</p>
         </div>
       ) : null}
       <div className="grid gap-4">
@@ -159,4 +163,18 @@ export function ManageUsersClient({
       </div>
     </section>
   );
+}
+
+function toUserError(error: unknown) {
+  if (error instanceof ApiClientError) {
+    return {
+      code: error.code,
+      message: error.displayMessage,
+    };
+  }
+
+  return {
+    code: "ERROR_USERS",
+    message: "Unable to update subscriber roles.",
+  };
 }

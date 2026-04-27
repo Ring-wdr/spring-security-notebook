@@ -41,7 +41,14 @@ describe("createLearningSnapshot", () => {
       { label: "Grant type", value: "Bearer" },
       { label: "Access token TTL", value: "600 sec" },
       { label: "Refresh token TTL", value: "86400 sec" },
-      { label: "Refresh behavior", value: "Retry once on 401, then rotate stored tokens." },
+      {
+        label: "Refresh behavior",
+        value: "Protected server routes redirect through refresh-session, then retry with rotated tokens.",
+      },
+      {
+        label: "Logout effect",
+        value: "Logout revokes the current access token and removes the stored refresh token.",
+      },
     ]);
   });
 });
@@ -50,8 +57,8 @@ describe("describeProtectedRouteAccess", () => {
   it("explains unauthorized and forbidden responses with stable codes", () => {
     expect(describeProtectedRouteAccess("unauthorized")).toEqual({
       status: 401,
-      code: "ERROR_UNAUTHORIZED",
-      summary: "Authentication is required.",
+      code: "ERROR_ACCESS_TOKEN",
+      summary: "Authentication is required or the access token is invalid.",
     });
     expect(describeProtectedRouteAccess("forbidden")).toEqual({
       status: 403,

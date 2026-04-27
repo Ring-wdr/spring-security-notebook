@@ -98,9 +98,11 @@ async function LearnWorkspace() {
             </p>
           )}
           <div className="rounded-[20px] border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-4 text-sm leading-7 text-[color:var(--muted-foreground)]">
-            The frontend stores token pairs in the session cookie, retries one
-            protected request after a 401, and clears the session if refresh
-            also fails. Logout removes the stored refresh token on the backend.
+            The frontend stores token pairs in the session cookie, redirects
+            protected server routes through refresh-session when the access
+            token expires, and clears the session if refresh fails. Logout
+            revokes the current access token and removes the stored refresh
+            token on the backend.
           </div>
         </div>
 
@@ -114,7 +116,7 @@ async function LearnWorkspace() {
             status={UNAUTHORIZED_ROUTE.status}
             code={UNAUTHORIZED_ROUTE.code}
             summary={UNAUTHORIZED_ROUTE.summary}
-            body="This happens when no authenticated principal is available for a protected backend route."
+            body="This happens when no authenticated principal is available or when the presented access token has already expired or been revoked."
           />
           <RouteOutcomeCard
             title="Forbidden"
@@ -146,6 +148,11 @@ async function LearnWorkspace() {
               </p>
             </article>
           ))}
+        </div>
+        <div className="rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-5 text-sm leading-7 text-[color:var(--muted-foreground)]">
+          After logout, retrying a protected API with the same access token now
+          fails with <code>ERROR_ACCESS_TOKEN</code>, which makes token
+          revocation observable from the learning surface.
         </div>
       </section>
     </div>

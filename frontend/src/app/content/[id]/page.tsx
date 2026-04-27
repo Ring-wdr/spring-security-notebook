@@ -30,7 +30,10 @@ async function ContentDetailSection({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = await fetchProtectedJson<ContentDetail>(`/api/content/${id}`);
+  const item = await fetchProtectedJson<ContentDetail>(
+    `/api/content/${id}`,
+    `/content/${id}`,
+  );
 
   return (
     <section className="panel space-y-6">

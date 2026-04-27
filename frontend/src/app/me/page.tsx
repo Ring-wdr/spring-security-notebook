@@ -20,7 +20,7 @@ export default function MePage() {
 }
 
 async function ProfilePage() {
-  const session = await requireSession();
+  const session = await requireSession("/me");
   return (
     <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <section className="panel space-y-5">
@@ -62,9 +62,9 @@ async function ProfilePage() {
             value={String(session.tokens.refreshTokenExpiresIn)}
           />
           <p className="text-sm leading-7 text-[color:var(--muted-foreground)]">
-            The server-side proxy retries once with `/api/auth/refresh`
-            whenever a protected request returns 401 and a refresh token is
-            still available.
+            Protected server routes redirect through the internal refresh-session
+            flow when the access token expires. Logout revokes the current
+            access token and clears the stored refresh token on the backend.
           </p>
         </div>
       </section>

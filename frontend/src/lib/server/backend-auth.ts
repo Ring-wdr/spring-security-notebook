@@ -1,4 +1,5 @@
 import type { TokenPairResponse } from "../types";
+import { createDisplayError } from "../auth-errors";
 
 type ExecuteBackendRequestOptions = {
   fetchImpl?: typeof fetch;
@@ -12,11 +13,15 @@ type ExecuteBackendRequestOptions = {
 };
 
 export class BackendRequestError extends Error {
+  code: string;
+  displayMessage: string;
   status: number;
 
-  constructor(message: string, status: number) {
-    super(message);
+  constructor(code: string, displayMessage: string, status: number) {
+    super(displayMessage);
     this.name = "BackendRequestError";
+    this.code = code;
+    this.displayMessage = displayMessage;
     this.status = status;
   }
 }
@@ -126,11 +131,21 @@ async function toBackendRequestError(response: Response): Promise<BackendRequest
       error?: string;
       message?: string;
     };
+    const displayError = createDisplayError(
+      data.error ?? `HTTP_${response.status}`,
+      data.message,
+    );
     return new BackendRequestError(
-      data.error ?? data.message ?? `HTTP_${response.status}`,
+      displayError.code,
+      displayError.message,
       response.status,
     );
   } catch {
-    return new BackendRequestError(`HTTP_${response.status}`, response.status);
+    const displayError = createDisplayError(`HTTP_${response.status}`);
+    return new BackendRequestError(
+      displayError.code,
+      displayError.message,
+      response.status,
+    );
   }
 }

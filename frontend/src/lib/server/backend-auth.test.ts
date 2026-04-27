@@ -83,7 +83,9 @@ describe("executeBackendRequest", () => {
         onUnauthorized,
       }),
     ).rejects.toMatchObject({
-      message: "INVALID_REFRESH_TOKEN",
+      message: "Refresh token is invalid or expired.",
+      code: "INVALID_REFRESH_TOKEN",
+      displayMessage: "Refresh token is invalid or expired.",
       status: 401,
     });
 

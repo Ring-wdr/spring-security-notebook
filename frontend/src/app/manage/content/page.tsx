@@ -24,7 +24,7 @@ export default function ManageContentPage() {
 }
 
 async function ManageContentWorkspace() {
-  const session = await requireSession();
+  const session = await requireSession("/manage/content");
 
   if (!hasAnyRole(session, MANAGER_ROLES)) {
     return (
@@ -37,6 +37,7 @@ async function ManageContentWorkspace() {
 
   const items = await fetchProtectedJson<ContentSummary[]>(
     "/api/content?includeAll=true",
+    "/manage/content",
   );
 
   return <ManageContentClient initialItems={items} />;

@@ -66,13 +66,13 @@ export const LECTURE_AUDIT_ITEMS: LectureAuditItem[] = [
     step: 8,
     title: "Payload safety and error handling",
     status: "implemented_by_this_phase",
-    summary: "The learning surface highlights payload-safe metadata only and documents stable 401 and 403 responses.",
+    summary: "The learning surface highlights payload-safe metadata only and explains both missing-auth and invalid-token 401 responses alongside 403 boundaries.",
   },
   {
     step: 9,
     title: "Refresh token controller",
     status: "implemented_by_this_phase",
-    summary: "Refresh retry, token rotation rules, and logout invalidation are now surfaced as explicit learning checkpoints.",
+    summary: "Refresh-session redirects, token rotation rules, and logout invalidation are now surfaced as explicit learning checkpoints.",
   },
   {
     step: 10,
@@ -105,7 +105,11 @@ export function createLearningSnapshot(
       { label: "Refresh token TTL", value: `${session.tokens.refreshTokenExpiresIn} sec` },
       {
         label: "Refresh behavior",
-        value: "Retry once on 401, then rotate stored tokens.",
+        value: "Protected server routes redirect through refresh-session, then retry with rotated tokens.",
+      },
+      {
+        label: "Logout effect",
+        value: "Logout revokes the current access token and removes the stored refresh token.",
       },
     ],
   };
@@ -119,8 +123,8 @@ export function describeProtectedRouteAccess(kind: "unauthorized" | "forbidden")
   if (kind === "unauthorized") {
     return {
       status: 401,
-      code: "ERROR_UNAUTHORIZED",
-      summary: "Authentication is required.",
+      code: "ERROR_ACCESS_TOKEN",
+      summary: "Authentication is required or the access token is invalid.",
     };
   }
 

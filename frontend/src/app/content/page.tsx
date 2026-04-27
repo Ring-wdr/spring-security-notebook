@@ -22,7 +22,10 @@ export default function ContentListPage() {
 }
 
 async function ContentList() {
-  const items = await fetchProtectedJson<ContentSummary[]>("/api/content");
+  const items = await fetchProtectedJson<ContentSummary[]>(
+    "/api/content",
+    "/content",
+  );
 
   return (
     <section className="panel space-y-6">
