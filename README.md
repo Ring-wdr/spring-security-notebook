@@ -130,5 +130,6 @@ spring-security-notebook/
 이 저장소는 스프링 시큐리티 관련 자료를 정리하거나 확장할 때 설치된 `notebooklm` 스킬을 활용하는 것을 전제로 합니다.
 
 - `notebooklm` 스킬은 학습 자료 요약, 보충 설명, 질의응답, 실습용 아티팩트 생성에 사용합니다.
+- 프론트엔드 현대화 작업은 repo-local `modernize-next-react19` 스킬을 우선 사용하고, 브라우저 확인이 필요할 때 그 흐름 안에서 `next-browser`를 사용합니다.
 - 개인정보 또는 계정 식별에 해당하는 notebook id, 인증 정보, 로컬 계정 정보는 문서에 기록하지 않습니다.
 - 스킬 호출 여부와 운영 규칙은 [AGENTS.md](/D:/spring-security-notebook/AGENTS.md)에서 관리합니다.

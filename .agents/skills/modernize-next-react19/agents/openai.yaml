@@ -1,0 +1,4 @@
+interface:
+  display_name: "Modernize Next React 19"
+  short_description: "React 19 cleanup for Next.js UI"
+  default_prompt: "Use $modernize-next-react19 to enable React Compiler, remove unnecessary memoization, and refactor legacy frontend code toward React 19 patterns while keeping auth behavior stable."

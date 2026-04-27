@@ -8,8 +8,8 @@
 
 스프링 시큐리티 관련 설명, 요약, 보충 자료, 비교, 학습용 아티팩트가 필요하면 설치된 `notebooklm` 스킬을 우선 사용합니다.
 
-- 프론트엔드 작업은 설치된 `next-browser` 스킬을 우선 사용합니다.
 - 백엔드 작업은 현재 저장소 구조와 학습 문서 흐름을 먼저 따르고, Spring Boot 일반 구현은 설치된 `java-springboot` 스킬을 참고합니다.
+- 프론트엔드 개선 작업은 루트 `AGENTS.md`에 세부 규칙을 적지 않고, repo-local `modernize-next-react19` 스킬과 `frontend/AGENTS.md`로 위임합니다.
 
 적용 예시는 다음과 같습니다.
 
@@ -21,7 +21,7 @@
 ## Workflow Rules
 
 1. 먼저 루트 가이드와 `docs/spring-security-notebooklm-docs/` 문서를 읽고 현재 학습 맥락을 파악합니다.
-2. 프론트엔드 작업이면 `next-browser`, 백엔드 작업이면 현재 구조 + `java-springboot`, 보안 학습 자료 정리면 `notebooklm`을 우선 적용합니다.
+2. 보안 학습 자료 정리는 `notebooklm`, 백엔드 작업은 현재 구조 + `java-springboot`, 프론트엔드 개선 작업은 repo-local `modernize-next-react19` 스킬을 우선 적용합니다.
 3. 생성된 내용은 이 레포의 학습 목적에 맞게 간결하게 재구성하고, 문서 간 중복은 최소화합니다.
 4. notebook id, 인증 상태, 계정 식별자 같은 개인정보성 정보는 어떤 문서에도 남기지 않습니다.
 
