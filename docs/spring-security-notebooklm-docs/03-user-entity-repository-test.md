@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 03 - 사용자 Entity/Repository/Test 코드 작성' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 03 - 사용자 Entity/Repository/Test 코드 작성](https://youtu.be/iqVKBCPkxAo?si=wp0axLBbyryaWZaG)
+
 ---
 
 ## 1. 문서 개요

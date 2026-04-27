@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 07 - 스프링 시큐리티 중간 정리 및 Bearer 토큰을 이용한 테스트 작성' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 07 - 스프링 시큐리티 중간 정리 및 Bearer 토큰을 이용한 테스트 작성](https://youtu.be/3Lsdvx4q7cg?si=QugMj4Wp0T5ipHCx)
+
 ---
 
 ## 1. 문서 개요

@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 06 - JWTAuthenticationFilter 작성하기' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 06 - JWTAuthenticationFilter 작성하기](https://youtu.be/tg-4_glAFUc?si=FSGhT5uaW9-y5Ef5)
+
 ---
 
 ## 1. 문서 개요

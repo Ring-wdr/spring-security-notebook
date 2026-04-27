@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 01 - 개념 이해하기 (1/10)' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 01 - 개념 이해하기 (1/10)](https://youtu.be/7VC2wV0OH24?si=NKmVDTH8fcER9WBF)
+
 ---
 
 ## 1. 문서 개요

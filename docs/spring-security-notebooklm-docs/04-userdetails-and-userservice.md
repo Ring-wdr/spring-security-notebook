@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 04 - UserDetail과 UserService 확장' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 04 - UserDetail과 UserService 확장](https://youtu.be/xo9Mp-Ep-18?si=XrBUekjMcEDebr0m)
+
 ---
 
 ## 1. 문서 개요

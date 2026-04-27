@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 10 - 전체 정리 및 마무리' 소스의 내용을 바탕으로 작성된 최종 요약 가이드입니다.
 
+원본 강의: [SpringSecurity 10 - 전체 정리 및 마무리](https://youtu.be/TYndAk11v2c?si=laUFXKhEQIWX7hQW)
+
 ---
 
 ## 1. 문서 개요

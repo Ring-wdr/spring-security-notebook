@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 02 - 설정(SecurityConfig) (2/10)' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 02 - 설정(SecurityConfig) (2/10)](https://youtu.be/sbx9eA7FqjA?si=wrWKF54FBBjfCxFK)
+
 ---
 
 ## 1. 문서 개요

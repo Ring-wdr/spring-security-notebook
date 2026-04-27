@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 08 - JWT 토큰에 패스워드 제외하고 에러 핸들링하기' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 08 - JWT 토큰에 패스워드 제외하고 에러 핸들링하기](https://youtu.be/unnnFnbw9zg?si=N6Nyrtk1t1lPxft2)
+
 ---
 
 ## 1. 문서 개요

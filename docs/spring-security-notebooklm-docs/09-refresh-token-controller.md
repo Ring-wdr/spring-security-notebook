@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 09 - JWT RefreshTokenController 작성하기' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 09 - JWT RefreshTokenController 작성하기](https://youtu.be/bBWDV6Rj-HI?si=zrHOV-cba71I2EBE)
+
 ---
 
 ## 1. 문서 개요

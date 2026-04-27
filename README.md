@@ -109,6 +109,106 @@ spring-security-notebook/
 3. 백엔드 인증 흐름과 Next.js 프론트엔드 인증 흐름을 함께 연결해서 점검합니다.
 4. 마지막에는 JWT 발급, 인증 필터, Refresh Token, 예외 처리, 테스트 흐름을 하나의 시스템으로 복습합니다.
 
+## Visual Security Flow
+
+아래 다이어그램은 이 레포에서 학습하는 핵심 보안 흐름과 화면 관리 흐름을 한눈에 볼 수 있도록 요약한 것입니다.
+
+### Backend Security Flow
+
+```mermaid
+sequenceDiagram
+    participant U as "User / Browser"
+    participant N as "Next.js loginAction"
+    participant SF as "Spring Security Filter Chain"
+    participant LP as "LoginSuccessHandler"
+    participant AS as "AuthService"
+    participant JS as "JwtService"
+    participant RS as "RefreshTokenStore"
+    participant JF as "JwtAuthenticationFilter"
+    participant API as "Protected API"
+
+    U->>N: "Submit '/login' form"
+    N->>SF: "POST '/api/auth/login' with email/password"
+    SF->>SF: "formLogin + PasswordEncoder + UserDetailsService"
+    SF-->>LP: "Authentication success"
+    LP->>AS: "issueTokens(principal)"
+    AS->>JS: "generateTokenPair(principal)"
+    AS->>RS: "store(refreshToken, ttl)"
+    LP-->>N: "Return accessToken + refreshToken"
+    N->>API: "GET '/api/users/me' with access token"
+    API->>JF: "Authorize request"
+    JF->>JS: "validateAccessToken(token)"
+    JF->>API: "SecurityContextHolder principal set"
+    API-->>N: "Current user profile"
+    N-->>U: "Write session cookie and redirect to '/me'"
+
+    U->>API: "Open protected route or API later"
+    API->>JF: "Read 'Authorization: Bearer ...'"
+    JF->>JS: "validateAccessToken(token)"
+    alt "valid token"
+        JF->>API: "Allow controller and method security"
+        API-->>U: "200 OK"
+    else "expired, revoked, or malformed token"
+        JF-->>U: "401 'ERROR_ACCESS_TOKEN'"
+    end
+
+    U->>API: "POST '/api/auth/refresh'"
+    API->>AS: "refresh(accessToken, refreshToken)"
+    AS->>JS: "read expired access claims + validate refresh token"
+    AS->>RS: "compare stored refresh token and maybe reissue"
+    API-->>U: "Rotated token pair"
+
+    U->>API: "POST '/api/auth/logout'"
+    API->>AS: "logout(principal, authorizationHeader)"
+    AS->>RS: "invalidate refresh token"
+    AS->>AS: "revoke access token in blocklist"
+    API-->>U: "204 No Content"
+```
+
+### Screen And Session Flow
+
+```mermaid
+flowchart TD
+    Start["User opens the frontend"] --> Learn["'/learn'<br/>Lecture companion and auth snapshot"]
+    Start --> Login["'/login'<br/>JWT login form"]
+
+    Login --> LoginAction["'loginAction' posts to '/api/auth/login'"]
+    LoginAction --> SessionCookie["Session cookie stores token pair"]
+    SessionCookie --> Me["'/me'<br/>Current principal screen"]
+
+    Learn --> OptionalSession["'getOptionalSession()'<br/>show metadata without forcing login"]
+    Me --> RequireSession["'requireSession(returnTo)'"]
+    RequireSession --> TokenState{"Access token still valid?"}
+
+    TokenState -- "yes" --> ProtectedFetch["'fetchProtectedJson' or backend request"]
+    TokenState -- "no, backend returns 401" --> RefreshRoute["'/auth/refresh-session?returnTo=...'"]
+    RefreshRoute --> RefreshApi["POST '/api/auth/refresh'"]
+    RefreshApi -- "success" --> RotateCookie["Rotate session cookie"]
+    RotateCookie --> ReturnTo["Redirect back to original screen"]
+    RefreshApi -- "failure" --> LoginError["Clear cookie and redirect to '/login?error=ERROR_ACCESS_TOKEN'"]
+
+    ProtectedFetch --> ManageContent["'/manage/content'"]
+    ProtectedFetch --> ManageUsers["'/manage/users'"]
+
+    ManageContent --> ManagerGate{"ROLE_MANAGER or ROLE_ADMIN?"}
+    ManagerGate -- "yes" --> ContentWorkspace["Manager content workspace"]
+    ManagerGate -- "no" --> ManagerBlocked["Access restricted panel"]
+
+    ManageUsers --> AdminGate{"ROLE_ADMIN?"}
+    AdminGate -- "yes" --> UserWorkspace["Admin role management screen"]
+    AdminGate -- "no" --> AdminBlocked["Access restricted panel"]
+
+    ProtectedFetch --> ProxyRoutes["Frontend route handlers proxy to backend APIs"]
+    ProxyRoutes --> ContentApi["'/api/content'"]
+    ProxyRoutes --> AdminApi["'/api/admin/users'"]
+
+    SessionCookie --> Logout["'logoutAction'"]
+    Logout --> BackendLogout["POST '/api/auth/logout'"]
+    BackendLogout --> Anonymous["Cookie cleared and user returns to '/login'"]
+```
+
+이 흐름에서 `401`은 인증 정보가 없거나 토큰이 만료·폐기된 경우를 의미하고, `403`은 인증은 되었지만 필요한 role이 부족한 경우를 의미합니다.
+
 ## Learning Surface
 
 - 브라우저 학습 페이지: `frontend` 실행 후 `/learn`

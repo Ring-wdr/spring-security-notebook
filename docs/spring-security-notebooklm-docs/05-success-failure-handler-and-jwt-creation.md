@@ -2,6 +2,8 @@
 
 본 문서는 'SpringSecurity 05 - Sucess/Failure Handler & JWT token 생성하기' 소스 내용을 바탕으로 작성되었습니다.
 
+원본 강의: [SpringSecurity 05 - Sucess/Failure Handler & JWT token 생성하기](https://youtu.be/XVkLwKEPYk0?si=9xuIHjVIzjS1y1nG)
+
 ---
 
 ## 1. 문서 개요
