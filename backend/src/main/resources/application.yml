@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:postgresql://localhost:${APP_DB_PORT:5432}/${APP_DB_NAME:security_notebook}
+    username: ${APP_DB_USERNAME:security}
+    password: ${APP_DB_PASSWORD:security}
+  data:
+    redis:
+      host: localhost
+      port: ${APP_VALKEY_PORT:6379}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      indent-output: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+app:
+  jwt:
+    issuer: ${APP_JWT_ISSUER:spring-security-notebook}
+    secret: ${APP_JWT_SECRET:change-this-to-a-long-32-char-secret-key}
+    access-token-minutes: 10
+    refresh-token-minutes: 1440

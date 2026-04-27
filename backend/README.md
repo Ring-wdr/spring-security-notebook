@@ -7,7 +7,7 @@
 - Spring Boot `4.0.6`
 - Maven Wrapper (`mvnw`, `mvnw.cmd`)
 - Java `21`
-- Dependencies: `Spring Web MVC`, `Spring Security`, `Spring Data JPA`, `Validation`, `H2`, `Lombok`
+- Dependencies: `Spring Web MVC`, `Spring Security`, `Spring Data JPA`, `Spring Data Redis`, `Validation`, `PostgreSQL`, `Actuator`, `Lombok`
 
 ## Key Structure
 
@@ -26,9 +26,12 @@ backend/
 
 ## Verification
 
+- 인프라 실행: `docker compose up -d`
 - 테스트: `.\mvnw.cmd test`
 
 ## Notes
 
 - 이 프로젝트는 공식 Initializr 생성물을 기준으로 점진적으로 확장합니다.
 - 실습 순서는 `docs/spring-security-notebooklm-docs/` 문서 번호를 따릅니다.
+- DB는 PostgreSQL, 토큰/세션성 저장소는 Valkey를 기준으로 확장합니다.
+- 환경변수 예시는 루트 `.env.example`에 둡니다.

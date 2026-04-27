@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: spring-security-notebook-postgres
+    environment:
+      POSTGRES_DB: ${APP_DB_NAME}
+      POSTGRES_USER: ${APP_DB_USERNAME}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+    ports:
+      - "${APP_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    container_name: spring-security-notebook-valkey
+    ports:
+      - "${APP_VALKEY_PORT:-6379}:6379"
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
