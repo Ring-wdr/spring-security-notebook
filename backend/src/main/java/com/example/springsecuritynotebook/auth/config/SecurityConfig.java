@@ -1,5 +1,7 @@
 package com.example.springsecuritynotebook.auth.config;
 
+import com.example.springsecuritynotebook.auth.handler.LoginFailureHandler;
+import com.example.springsecuritynotebook.auth.handler.LoginSuccessHandler;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,9 +24,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final ClientProperties clientProperties;
+    private final LoginSuccessHandler loginSuccessHandler;
+    private final LoginFailureHandler loginFailureHandler;
 
-    public SecurityConfig(ClientProperties clientProperties) {
+    public SecurityConfig(
+            ClientProperties clientProperties,
+            LoginSuccessHandler loginSuccessHandler,
+            LoginFailureHandler loginFailureHandler
+    ) {
         this.clientProperties = clientProperties;
+        this.loginSuccessHandler = loginSuccessHandler;
+        this.loginFailureHandler = loginFailureHandler;
     }
 
     @Bean
@@ -34,9 +44,16 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable())
+                .formLogin(form -> form
+                        .loginProcessingUrl("/api/auth/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .successHandler(loginSuccessHandler)
+                        .failureHandler(loginFailureHandler)
+                )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll()
                 )
