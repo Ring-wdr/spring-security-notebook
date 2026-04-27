@@ -7,4 +7,13 @@ public record TokenPairResponse(
         long accessTokenExpiresIn,
         long refreshTokenExpiresIn
 ) {
+    public TokenPairResponse withRefreshToken(String refreshToken, long refreshTokenExpiresIn) {
+        return new TokenPairResponse(
+                grantType,
+                accessToken,
+                refreshToken,
+                accessTokenExpiresIn,
+                refreshTokenExpiresIn
+        );
+    }
 }

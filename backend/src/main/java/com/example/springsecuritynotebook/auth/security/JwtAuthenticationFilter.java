@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String requestUri = request.getRequestURI();
-        return List.of("/api/auth/login", "/actuator/health", "/actuator/info").contains(requestUri);
+        return List.of("/api/auth/login", "/api/auth/refresh", "/actuator/health", "/actuator/info").contains(requestUri);
     }
 
     @Override
