@@ -91,4 +91,82 @@ describe("executeBackendRequest", () => {
 
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it("returns undefined for successful 204 responses", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
+    const response = await executeBackendRequest<void>({
+      fetchImpl,
+      baseUrl: "http://localhost:8080",
+      path: "/api/auth/logout",
+      init: {
+        method: "POST",
+      },
+      tokens: TOKENS,
+      skipRefresh: true,
+    });
+
+    expect(response).toBeUndefined();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onUnauthorized immediately when no tokens are available", async () => {
+    const onUnauthorized = vi.fn();
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "AUTHENTICATION_REQUIRED" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(
+      executeBackendRequest({
+        fetchImpl,
+        baseUrl: "http://localhost:8080",
+        path: "/api/content",
+        tokens: null,
+        onUnauthorized,
+      }),
+    ).rejects.toMatchObject({
+      code: "AUTHENTICATION_REQUIRED",
+      status: 401,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("does not attempt refresh when skipRefresh is enabled", async () => {
+    const onUnauthorized = vi.fn();
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "ERROR_ACCESS_TOKEN" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(
+      executeBackendRequest({
+        fetchImpl,
+        baseUrl: "http://localhost:8080",
+        path: "/api/auth/logout",
+        init: {
+          method: "POST",
+        },
+        tokens: TOKENS,
+        onUnauthorized,
+        skipRefresh: true,
+      }),
+    ).rejects.toMatchObject({
+      code: "ERROR_ACCESS_TOKEN",
+      status: 401,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });

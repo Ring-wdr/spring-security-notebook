@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,6 +43,8 @@ class JwtProtectedApiTests {
 
   @Autowired private ObjectMapper objectMapper;
 
+  @Autowired private JdbcTemplate jdbcTemplate;
+
   private MockMvc mockMvc;
   private String userToken;
   private String adminToken;
@@ -51,8 +54,7 @@ class JwtProtectedApiTests {
     mockMvc =
         MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
 
-    contentRepository.deleteAll();
-    subscriberRepository.deleteAll();
+    resetDatabase();
 
     Subscriber user =
         Subscriber.builder()
@@ -70,10 +72,10 @@ class JwtProtectedApiTests {
             .build();
     admin.addRole(SubscriberRole.ROLE_ADMIN);
 
-    subscriberRepository.save(user);
-    subscriberRepository.save(admin);
+    subscriberRepository.saveAndFlush(user);
+    subscriberRepository.saveAndFlush(admin);
 
-    contentRepository.save(
+    contentRepository.saveAndFlush(
         Content.builder()
             .title("Protected Content")
             .body("only for logged-in users")
@@ -139,8 +141,8 @@ class JwtProtectedApiTests {
             .nickname("manager")
             .build();
     manager.addRole(SubscriberRole.ROLE_MANAGER);
-    subscriberRepository.save(manager);
-    contentRepository.save(
+    subscriberRepository.saveAndFlush(manager);
+    contentRepository.saveAndFlush(
         Content.builder()
             .title("Draft Content")
             .body("draft")
@@ -206,5 +208,10 @@ class JwtProtectedApiTests {
     Map<String, Object> response =
         objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     return (String) response.get("accessToken");
+  }
+
+  private void resetDatabase() {
+    jdbcTemplate.execute(
+        "TRUNCATE TABLE subscriber_roles, subscribers, contents RESTART IDENTITY CASCADE");
   }
 }

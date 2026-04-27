@@ -2,11 +2,10 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/login-form";
-import { createDisplayError, getErrorCode } from "@/lib/auth-errors";
-import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
 import { getOptionalSession } from "@/lib/server/session";
 import { cookies } from "next/headers";
 import { readSessionCookie } from "@/lib/server/session-cookie";
+import { getLoginGateState } from "./login-gate";
 
 export default function LoginPage({
   searchParams,
@@ -25,24 +24,22 @@ async function LoginGate({
 }: {
   searchParams: Promise<{ error?: string | string[] }>;
 }) {
-  if (await getOptionalSession()) {
-    redirect("/me");
+  const [session, cookieStore, params] = await Promise.all([
+    getOptionalSession(),
+    cookies(),
+    searchParams,
+  ]);
+  const nextState = getLoginGateState({
+    hasSession: Boolean(session),
+    hasSessionCookie: Boolean(readSessionCookie(cookieStore)),
+    errorParam: params.error,
+  });
+
+  if (nextState.type === "redirect") {
+    redirect(nextState.location);
   }
 
-  const cookieStore = await cookies();
-  if (readSessionCookie(cookieStore)) {
-    redirect(buildRefreshSessionRedirectPath("/me"));
-  }
-
-  const params = await searchParams;
-  const errorCode = getErrorCode(params.error);
-  return (
-    <LoginLayout
-      initialError={
-        errorCode ? createDisplayError(errorCode) : null
-      }
-    />
-  );
+  return <LoginLayout initialError={nextState.initialError} />;
 }
 
 function LoginLayout({

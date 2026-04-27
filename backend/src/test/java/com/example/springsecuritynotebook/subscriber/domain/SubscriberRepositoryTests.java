@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -22,9 +23,11 @@ class SubscriberRepositoryTests {
 
   @Autowired private EntityManagerFactory entityManagerFactory;
 
+  @Autowired private JdbcTemplate jdbcTemplate;
+
   @BeforeEach
   void cleanUp() {
-    subscriberRepository.deleteAll();
+    jdbcTemplate.execute("TRUNCATE TABLE subscriber_roles, subscribers RESTART IDENTITY CASCADE");
   }
 
   @Test
@@ -38,7 +41,7 @@ class SubscriberRepositoryTests {
     subscriber.addRole(SubscriberRole.ROLE_USER);
     subscriber.addRole(SubscriberRole.ROLE_MANAGER);
 
-    subscriberRepository.save(subscriber);
+    subscriberRepository.saveAndFlush(subscriber);
 
     Optional<Subscriber> result = subscriberRepository.findByEmail("user1@example.com");
 

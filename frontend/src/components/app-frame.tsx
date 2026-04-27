@@ -3,6 +3,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { logoutAction } from "@/app/actions/session";
 import { ActiveNavLink } from "@/components/active-nav-link";
+import { getNavigationItems } from "@/components/app-frame.navigation";
 import { getOptionalSession } from "@/lib/server/session";
 import type { StoredSession } from "@/lib/types";
 
@@ -37,26 +38,7 @@ async function SessionNavigation() {
 }
 
 function Navigation({ session }: { session: StoredSession | null }) {
-  const roleNames = session?.user?.roleNames ?? [];
-  const navItems = [
-    { href: "/", label: "Overview", visible: true },
-    { href: "/learn", label: "Learn", visible: true },
-    { href: "/login", label: "Login", visible: !session },
-    { href: "/me", label: "My Profile", visible: Boolean(session) },
-    { href: "/content", label: "Contents", visible: Boolean(session) },
-    {
-      href: "/manage/content",
-      label: "Manage Content",
-      visible: roleNames.some(
-        (role) => role === "ROLE_MANAGER" || role === "ROLE_ADMIN",
-      ),
-    },
-    {
-      href: "/manage/users",
-      label: "Manage Users",
-      visible: roleNames.includes("ROLE_ADMIN"),
-    },
-  ].filter((item) => item.visible);
+  const navItems = getNavigationItems(session);
 
   return (
     <nav className="flex flex-wrap items-center justify-end gap-2">

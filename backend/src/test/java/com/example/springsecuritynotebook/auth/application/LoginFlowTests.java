@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,6 +36,8 @@ class LoginFlowTests {
 
   @Autowired private WebApplicationContext webApplicationContext;
 
+  @Autowired private JdbcTemplate jdbcTemplate;
+
   private MockMvc mockMvc;
 
   @BeforeEach
@@ -42,7 +45,7 @@ class LoginFlowTests {
     mockMvc =
         MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
 
-    subscriberRepository.deleteAll();
+    resetDatabase();
 
     Subscriber subscriber =
         Subscriber.builder()
@@ -51,7 +54,7 @@ class LoginFlowTests {
             .nickname("manager")
             .build();
     subscriber.addRole(SubscriberRole.ROLE_MANAGER);
-    subscriberRepository.save(subscriber);
+    subscriberRepository.saveAndFlush(subscriber);
   }
 
   @Test
@@ -90,5 +93,9 @@ class LoginFlowTests {
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error").value("ERROR_LOGIN"))
         .andExpect(jsonPath("$.message").value("Login failed."));
+  }
+
+  private void resetDatabase() {
+    jdbcTemplate.execute("TRUNCATE TABLE subscriber_roles, subscribers RESTART IDENTITY CASCADE");
   }
 }

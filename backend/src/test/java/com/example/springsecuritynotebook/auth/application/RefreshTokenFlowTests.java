@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +40,8 @@ class RefreshTokenFlowTests {
 
   @Autowired private WebApplicationContext webApplicationContext;
 
+  @Autowired private JdbcTemplate jdbcTemplate;
+
   private MockMvc mockMvc;
 
   @BeforeEach
@@ -46,7 +49,7 @@ class RefreshTokenFlowTests {
     mockMvc =
         MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
 
-    subscriberRepository.deleteAll();
+    resetDatabase();
     refreshTokenStore.invalidate("user@example.com");
 
     Subscriber subscriber =
@@ -56,7 +59,7 @@ class RefreshTokenFlowTests {
             .nickname("user")
             .build();
     subscriber.addRole(SubscriberRole.ROLE_USER);
-    subscriberRepository.save(subscriber);
+    subscriberRepository.saveAndFlush(subscriber);
   }
 
   @Test
@@ -221,5 +224,9 @@ class RefreshTokenFlowTests {
     TokenPairResponse response =
         objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
     return response.accessToken();
+  }
+
+  private void resetDatabase() {
+    jdbcTemplate.execute("TRUNCATE TABLE subscriber_roles, subscribers RESTART IDENTITY CASCADE");
   }
 }
