@@ -31,14 +31,14 @@ public class JwtService {
     long accessTokenExpiresIn = jwtProperties.accessTokenMinutes() * 60L;
     long refreshTokenExpiresIn = jwtProperties.refreshTokenMinutes() * 60L;
 
-    String accessToken = generateAccessToken(principal.getClaims(), accessTokenExpiresIn);
+    String accessToken = generateAccessToken(principal.toAccessTokenClaims(), accessTokenExpiresIn);
     String refreshToken = generateRefreshToken(principal.getEmail(), refreshTokenExpiresIn);
 
     return new TokenPairResponse(
         "Bearer", accessToken, refreshToken, accessTokenExpiresIn, refreshTokenExpiresIn);
   }
 
-  public Map<String, Object> validateToken(String token) {
+  public AccessTokenClaims validateAccessToken(String token) {
     Claims claims;
     try {
       claims = parseClaims(token);
@@ -46,31 +46,42 @@ public class JwtService {
       throw new CustomJwtException("ERROR_ACCESS_TOKEN");
     }
 
-    return sanitizeClaims(claims);
+    return AccessTokenClaims.from(sanitizeClaims(claims));
   }
 
-  public Map<String, Object> readClaimsAllowExpired(String token) {
+  public AccessTokenClaims readAccessClaimsAllowExpired(String token) {
     try {
-      return validateToken(token);
+      return validateAccessToken(token);
     } catch (CustomJwtException ignored) {
       try {
         Claims expiredClaims =
             Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
-        return sanitizeClaims(expiredClaims);
+        return AccessTokenClaims.from(sanitizeClaims(expiredClaims));
       } catch (ExpiredJwtException exception) {
-        return sanitizeClaims(exception.getClaims());
+        return AccessTokenClaims.from(sanitizeClaims(exception.getClaims()));
       } catch (JwtException | IllegalArgumentException exception) {
         throw new CustomJwtException("ERROR_ACCESS_TOKEN");
       }
     }
   }
 
-  public String generateAccessToken(Map<String, Object> claims, long expiresInSeconds) {
-    return generateToken(claims, expiresInSeconds);
+  public String generateAccessToken(AccessTokenClaims claims, long expiresInSeconds) {
+    return generateToken(claims.toClaimsMap(), expiresInSeconds);
   }
 
   public String generateRefreshToken(String email, long expiresInSeconds) {
     return generateToken(Map.of("email", email), expiresInSeconds);
+  }
+
+  public String validateRefreshTokenEmail(String token) {
+    Claims claims;
+    try {
+      claims = parseClaims(token);
+    } catch (JwtException | IllegalArgumentException exception) {
+      throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+    }
+
+    return (String) claims.get("email");
   }
 
   public long getAccessTokenExpiresInSeconds() {

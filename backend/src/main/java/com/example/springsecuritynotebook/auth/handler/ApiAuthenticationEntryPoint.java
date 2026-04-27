@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -31,10 +30,6 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
     response.setCharacterEncoding("UTF-8");
     objectMapper.writeValue(
         response.getWriter(),
-        Map.of(
-            "error",
-            "ERROR_UNAUTHORIZED",
-            "message",
-            AuthErrorMessages.getMessage("ERROR_UNAUTHORIZED")));
+        ErrorResponse.of("ERROR_UNAUTHORIZED", AuthErrorMessages.getMessage("ERROR_UNAUTHORIZED")));
   }
 }

@@ -7,12 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.springsecuritynotebook.auth.application.TokenPairResponse;
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.domain.ContentRepository;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRepository;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
@@ -202,8 +201,8 @@ class JwtProtectedApiTests {
             .andExpect(status().isOk())
             .andReturn();
 
-    Map<String, Object> response =
-        objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
-    return (String) response.get("accessToken");
+    TokenPairResponse response =
+        objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
+    return response.accessToken();
   }
 }

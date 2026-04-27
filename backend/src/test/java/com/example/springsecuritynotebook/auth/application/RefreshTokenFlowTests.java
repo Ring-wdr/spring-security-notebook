@@ -66,7 +66,8 @@ class RefreshTokenFlowTests {
         new SubscriberPrincipal(
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
-    String expiredAccessToken = jwtService.generateAccessToken(principal.getClaims(), -30);
+    String expiredAccessToken =
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -30);
     String refreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
@@ -90,8 +91,8 @@ class RefreshTokenFlowTests {
     TokenPairResponse response =
         objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
 
-    assertThat(jwtService.validateToken(response.accessToken()))
-        .containsEntry("email", "user@example.com");
+    assertThat(jwtService.validateAccessToken(response.accessToken()).email())
+        .isEqualTo("user@example.com");
   }
 
   @Test
@@ -162,7 +163,8 @@ class RefreshTokenFlowTests {
         new SubscriberPrincipal(
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
-    String expiredAccessToken = jwtService.generateAccessToken(principal.getClaims(), -30);
+    String expiredAccessToken =
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -30);
     String refreshToken = jwtService.generateRefreshToken("user@example.com", 3500);
     refreshTokenStore.store("user@example.com", refreshToken, 3500);
 

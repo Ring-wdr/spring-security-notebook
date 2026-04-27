@@ -1,18 +1,18 @@
 package com.example.springsecuritynotebook.auth.security;
 
 import com.example.springsecuritynotebook.auth.application.AccessTokenBlocklist;
+import com.example.springsecuritynotebook.auth.application.AccessTokenClaims;
 import com.example.springsecuritynotebook.auth.application.JwtService;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
 import com.example.springsecuritynotebook.auth.handler.AuthErrorMessages;
+import com.example.springsecuritynotebook.auth.handler.ErrorResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -68,21 +68,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
-    Map<String, Object> claims;
+    AccessTokenClaims claims;
     try {
-      claims = jwtService.validateToken(token);
+      claims = jwtService.validateAccessToken(token);
     } catch (CustomJwtException exception) {
       writeAccessTokenError(response);
       return;
     }
 
-    SubscriberPrincipal principal =
-        new SubscriberPrincipal(
-            (String) claims.get("email"),
-            "",
-            (String) claims.getOrDefault("nickname", ""),
-            (Boolean) claims.getOrDefault("social", false),
-            extractRoleNames(claims.get("roleNames")));
+    SubscriberPrincipal principal = claims.toPrincipal();
 
     UsernamePasswordAuthenticationToken authenticationToken =
         new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
@@ -91,24 +85,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  private List<String> extractRoleNames(Object roleNames) {
-    if (roleNames instanceof List<?> values) {
-      return values.stream().filter(Objects::nonNull).map(String::valueOf).toList();
-    }
-
-    return List.of();
-  }
-
   private void writeAccessTokenError(HttpServletResponse response) throws IOException {
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
     objectMapper.writeValue(
         response.getWriter(),
-        Map.of(
-            "error",
-            "ERROR_ACCESS_TOKEN",
-            "message",
-            AuthErrorMessages.getMessage("ERROR_ACCESS_TOKEN")));
+        ErrorResponse.of("ERROR_ACCESS_TOKEN", AuthErrorMessages.getMessage("ERROR_ACCESS_TOKEN")));
   }
 }

@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -29,6 +28,6 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
     response.setCharacterEncoding("UTF-8");
     objectMapper.writeValue(
         response.getWriter(),
-        Map.of("error", "ERROR_LOGIN", "message", AuthErrorMessages.getMessage("ERROR_LOGIN")));
+        ErrorResponse.of("ERROR_LOGIN", AuthErrorMessages.getMessage("ERROR_LOGIN")));
   }
 }

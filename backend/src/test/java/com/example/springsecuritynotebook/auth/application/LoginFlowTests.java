@@ -73,11 +73,12 @@ class LoginFlowTests {
     TokenPairResponse response =
         objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
 
-    assertThat(jwtService.validateToken(response.accessToken()))
-        .containsEntry("email", "manager@example.com")
-        .containsEntry("nickname", "manager");
-    assertThat(jwtService.validateToken(response.refreshToken()))
-        .containsEntry("email", "manager@example.com");
+    assertThat(jwtService.validateAccessToken(response.accessToken()).email())
+        .isEqualTo("manager@example.com");
+    assertThat(jwtService.validateAccessToken(response.accessToken()).nickname())
+        .isEqualTo("manager");
+    assertThat(jwtService.validateRefreshTokenEmail(response.refreshToken()))
+        .isEqualTo("manager@example.com");
   }
 
   @Test

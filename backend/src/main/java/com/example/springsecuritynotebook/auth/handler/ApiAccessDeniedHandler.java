@@ -4,7 +4,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -31,10 +30,7 @@ public class ApiAccessDeniedHandler implements AccessDeniedHandler {
     response.setCharacterEncoding("UTF-8");
     objectMapper.writeValue(
         response.getWriter(),
-        Map.of(
-            "error",
-            "ERROR_ACCESS_DENIED",
-            "message",
-            AuthErrorMessages.getMessage("ERROR_ACCESS_DENIED")));
+        ErrorResponse.of(
+            "ERROR_ACCESS_DENIED", AuthErrorMessages.getMessage("ERROR_ACCESS_DENIED")));
   }
 }

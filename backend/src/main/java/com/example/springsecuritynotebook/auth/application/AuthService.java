@@ -1,7 +1,6 @@
 package com.example.springsecuritynotebook.auth.application;
 
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,16 +32,15 @@ public class AuthService {
       throw new CustomJwtException("ERROR_ACCESS_TOKEN");
     }
 
-    Map<String, Object> accessClaims = jwtService.readClaimsAllowExpired(accessToken);
-    String email = (String) accessClaims.get("email");
+    AccessTokenClaims accessClaims = jwtService.readAccessClaimsAllowExpired(accessToken);
+    String email = accessClaims.email();
     if (email == null || email.isBlank()) {
       throw new CustomJwtException("ERROR_ACCESS_TOKEN");
     }
 
     String refreshEmail;
     try {
-      Map<String, Object> refreshClaims = jwtService.validateToken(request.refreshToken());
-      refreshEmail = (String) refreshClaims.get("email");
+      refreshEmail = jwtService.validateRefreshTokenEmail(request.refreshToken());
     } catch (CustomJwtException exception) {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }

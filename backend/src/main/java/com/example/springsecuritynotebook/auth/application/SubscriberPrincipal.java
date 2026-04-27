@@ -3,9 +3,7 @@ package com.example.springsecuritynotebook.auth.application;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -37,13 +35,8 @@ public class SubscriberPrincipal extends User {
         roleNames);
   }
 
-  public Map<String, Object> getClaims() {
-    Map<String, Object> claims = new LinkedHashMap<>();
-    claims.put("email", email);
-    claims.put("nickname", nickname);
-    claims.put("social", social);
-    claims.put("roleNames", roleNames);
-    return claims;
+  public AccessTokenClaims toAccessTokenClaims() {
+    return new AccessTokenClaims(email, nickname, social, roleNames);
   }
 
   public String getEmail() {
