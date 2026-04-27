@@ -1,6 +1,6 @@
 package com.example.springsecuritynotebook.auth.handler;
 
-import com.example.springsecuritynotebook.auth.application.JwtService;
+import com.example.springsecuritynotebook.auth.application.AuthService;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.application.TokenPairResponse;
 import jakarta.servlet.ServletException;
@@ -16,11 +16,11 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtService jwtService;
+    private final AuthService authService;
     private final ObjectMapper objectMapper;
 
-    public LoginSuccessHandler(JwtService jwtService, ObjectMapper objectMapper) {
-        this.jwtService = jwtService;
+    public LoginSuccessHandler(AuthService authService, ObjectMapper objectMapper) {
+        this.authService = authService;
         this.objectMapper = objectMapper;
     }
 
@@ -31,7 +31,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             Authentication authentication
     ) throws IOException, ServletException {
         SubscriberPrincipal principal = (SubscriberPrincipal) authentication.getPrincipal();
-        TokenPairResponse tokenPair = jwtService.generateTokenPair(principal);
+        TokenPairResponse tokenPair = authService.issueTokens(principal);
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

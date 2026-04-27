@@ -2,6 +2,7 @@ package com.example.springsecuritynotebook.auth.application;
 
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
 import com.example.springsecuritynotebook.shared.config.JwtProperties;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -29,8 +30,8 @@ public class JwtService {
         long accessTokenExpiresIn = jwtProperties.accessTokenMinutes() * 60L;
         long refreshTokenExpiresIn = jwtProperties.refreshTokenMinutes() * 60L;
 
-        String accessToken = generateToken(principal.getClaims(), accessTokenExpiresIn);
-        String refreshToken = generateToken(Map.of("email", principal.getEmail()), refreshTokenExpiresIn);
+        String accessToken = generateAccessToken(principal.getClaims(), accessTokenExpiresIn);
+        String refreshToken = generateRefreshToken(principal.getEmail(), refreshTokenExpiresIn);
 
         return new TokenPairResponse(
                 "Bearer",
@@ -44,15 +45,58 @@ public class JwtService {
     public Map<String, Object> validateToken(String token) {
         Claims claims;
         try {
-            claims = Jwts.parser()
-                    .verifyWith(signingKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            claims = parseClaims(token);
         } catch (JwtException | IllegalArgumentException exception) {
             throw new CustomJwtException("ERROR_ACCESS_TOKEN");
         }
 
+        return sanitizeClaims(claims);
+    }
+
+    public Map<String, Object> readClaimsAllowExpired(String token) {
+        try {
+            return validateToken(token);
+        } catch (CustomJwtException ignored) {
+            try {
+                Claims expiredClaims = Jwts.parser()
+                        .verifyWith(signingKey)
+                        .build()
+                        .parseSignedClaims(token)
+                        .getPayload();
+                return sanitizeClaims(expiredClaims);
+            } catch (ExpiredJwtException exception) {
+                return sanitizeClaims(exception.getClaims());
+            } catch (JwtException | IllegalArgumentException exception) {
+                throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+            }
+        }
+    }
+
+    public String generateAccessToken(Map<String, Object> claims, long expiresInSeconds) {
+        return generateToken(claims, expiresInSeconds);
+    }
+
+    public String generateRefreshToken(String email, long expiresInSeconds) {
+        return generateToken(Map.of("email", email), expiresInSeconds);
+    }
+
+    public long getAccessTokenExpiresInSeconds() {
+        return jwtProperties.accessTokenMinutes() * 60L;
+    }
+
+    public long getRefreshTokenExpiresInSeconds() {
+        return jwtProperties.refreshTokenMinutes() * 60L;
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private Map<String, Object> sanitizeClaims(Claims claims) {
         Map<String, Object> result = new LinkedHashMap<>(claims);
         result.remove("exp");
         result.remove("iat");
