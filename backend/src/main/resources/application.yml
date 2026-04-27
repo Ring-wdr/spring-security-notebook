@@ -9,6 +9,8 @@ spring:
     redis:
       host: localhost
       port: ${APP_VALKEY_PORT:6379}
+      repositories:
+        enabled: false
   jpa:
     hibernate:
       ddl-auto: update
@@ -32,6 +34,8 @@ management:
       show-details: always
 
 app:
+  client:
+    origin: ${APP_CLIENT_ORIGIN:http://localhost:3000}
   jwt:
     issuer: ${APP_JWT_ISSUER:spring-security-notebook}
     secret: ${APP_JWT_SECRET:change-this-to-a-long-32-char-secret-key}
