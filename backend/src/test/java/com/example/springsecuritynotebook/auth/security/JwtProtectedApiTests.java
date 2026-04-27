@@ -19,18 +19,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class JwtProtectedApiTests {
 
   @Autowired private WebApplicationContext webApplicationContext;
@@ -43,8 +44,6 @@ class JwtProtectedApiTests {
 
   @Autowired private ObjectMapper objectMapper;
 
-  @Autowired private JdbcTemplate jdbcTemplate;
-
   private MockMvc mockMvc;
   private String userToken;
   private String adminToken;
@@ -53,8 +52,6 @@ class JwtProtectedApiTests {
   void setUp() throws Exception {
     mockMvc =
         MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
-
-    resetDatabase();
 
     Subscriber user =
         Subscriber.builder()
@@ -208,10 +205,5 @@ class JwtProtectedApiTests {
     Map<String, Object> response =
         objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     return (String) response.get("accessToken");
-  }
-
-  private void resetDatabase() {
-    jdbcTemplate.execute(
-        "TRUNCATE TABLE subscriber_roles, subscribers, contents RESTART IDENTITY CASCADE");
   }
 }

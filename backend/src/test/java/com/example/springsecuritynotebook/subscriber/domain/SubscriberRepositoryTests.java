@@ -5,16 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnitUtil;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class SubscriberRepositoryTests {
 
   @Autowired private SubscriberRepository subscriberRepository;
@@ -22,13 +22,6 @@ class SubscriberRepositoryTests {
   @Autowired private PasswordEncoder passwordEncoder;
 
   @Autowired private EntityManagerFactory entityManagerFactory;
-
-  @Autowired private JdbcTemplate jdbcTemplate;
-
-  @BeforeEach
-  void cleanUp() {
-    jdbcTemplate.execute("TRUNCATE TABLE subscriber_roles, subscribers RESTART IDENTITY CASCADE");
-  }
 
   @Test
   void saveAndFindSubscriberByEmailLoadsRoles() {
