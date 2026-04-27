@@ -19,24 +19,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
+  public AuthController(AuthService authService) {
+    this.authService = authService;
+  }
 
-    @PostMapping("/refresh")
-    public TokenPairResponse refresh(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-            @Valid @RequestBody RefreshTokenRequest request
-    ) {
-        return authService.refresh(authorizationHeader, request);
-    }
+  @PostMapping("/refresh")
+  public TokenPairResponse refresh(
+      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+      @Valid @RequestBody RefreshTokenRequest request) {
+    return authService.refresh(authorizationHeader, request);
+  }
 
-    @PostMapping("/logout")
-    @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal SubscriberPrincipal principal) {
-        authService.logout(principal);
-        return ResponseEntity.noContent().build();
-    }
+  @PostMapping("/logout")
+  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  public ResponseEntity<Void> logout(@AuthenticationPrincipal SubscriberPrincipal principal) {
+    authService.logout(principal);
+    return ResponseEntity.noContent().build();
+  }
 }

@@ -14,27 +14,20 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class LoginFailureHandler implements AuthenticationFailureHandler {
 
-    private final ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
 
-    public LoginFailureHandler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+  public LoginFailureHandler(ObjectMapper objectMapper) {
+    this.objectMapper = objectMapper;
+  }
 
-    @Override
-    public void onAuthenticationFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException exception
-    ) throws IOException, ServletException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(
-                response.getWriter(),
-                Map.of(
-                        "error", "ERROR_LOGIN",
-                        "message", exception.getMessage()
-                )
-        );
-    }
+  @Override
+  public void onAuthenticationFailure(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+      throws IOException, ServletException {
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
+    objectMapper.writeValue(
+        response.getWriter(), Map.of("error", "ERROR_LOGIN", "message", exception.getMessage()));
+  }
 }

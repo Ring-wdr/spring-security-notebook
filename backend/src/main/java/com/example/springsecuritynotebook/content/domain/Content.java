@@ -23,34 +23,34 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Content {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 150)
-    private String title;
+  @Column(nullable = false, length = 150)
+  private String title;
 
-    @Column(nullable = false, columnDefinition = "text")
-    private String body;
+  @Column(nullable = false, columnDefinition = "text")
+  private String body;
 
-    @Column(nullable = false, length = 80)
-    private String category;
+  @Column(nullable = false, length = 80)
+  private String category;
 
-    @Column(nullable = false)
-    private boolean published;
+  @Column(nullable = false)
+  private boolean published;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false)
+  private Instant createdAt;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Instant updatedAt;
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private Instant updatedAt;
 
-    public void update(String title, String body, String category, boolean published) {
-        this.title = title;
-        this.body = body;
-        this.category = category;
-        this.published = published;
-    }
+  public void update(String title, String body, String category, boolean published) {
+    this.title = title;
+    this.body = body;
+    this.category = category;
+    this.published = published;
+  }
 }

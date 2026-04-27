@@ -6,7 +6,4 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "app.client")
-public record ClientProperties(
-        @NotBlank String origin
-) {
-}
+public record ClientProperties(@NotBlank String origin) {}

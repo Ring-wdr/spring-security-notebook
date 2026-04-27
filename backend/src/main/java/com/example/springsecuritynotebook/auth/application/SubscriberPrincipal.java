@@ -12,67 +12,57 @@ import org.springframework.security.core.userdetails.User;
 
 public class SubscriberPrincipal extends User {
 
-    private final String email;
-    private final String nickname;
-    private final boolean social;
-    private final List<String> roleNames;
+  private final String email;
+  private final String nickname;
+  private final boolean social;
+  private final List<String> roleNames;
 
-    public SubscriberPrincipal(
-            String email,
-            String password,
-            String nickname,
-            boolean social,
-            List<String> roleNames
-    ) {
-        super(email, password, toAuthorities(roleNames));
-        this.email = email;
-        this.nickname = nickname;
-        this.social = social;
-        this.roleNames = List.copyOf(roleNames);
-    }
+  public SubscriberPrincipal(
+      String email, String password, String nickname, boolean social, List<String> roleNames) {
+    super(email, password, toAuthorities(roleNames));
+    this.email = email;
+    this.nickname = nickname;
+    this.social = social;
+    this.roleNames = List.copyOf(roleNames);
+  }
 
-    public static SubscriberPrincipal from(Subscriber subscriber) {
-        List<String> roleNames = subscriber.getRoleList().stream()
-                .map(SubscriberRole::name)
-                .toList();
+  public static SubscriberPrincipal from(Subscriber subscriber) {
+    List<String> roleNames = subscriber.getRoleList().stream().map(SubscriberRole::name).toList();
 
-        return new SubscriberPrincipal(
-                subscriber.getEmail(),
-                subscriber.getPassword(),
-                subscriber.getNickname(),
-                subscriber.isSocial(),
-                roleNames
-        );
-    }
+    return new SubscriberPrincipal(
+        subscriber.getEmail(),
+        subscriber.getPassword(),
+        subscriber.getNickname(),
+        subscriber.isSocial(),
+        roleNames);
+  }
 
-    public Map<String, Object> getClaims() {
-        Map<String, Object> claims = new LinkedHashMap<>();
-        claims.put("email", email);
-        claims.put("nickname", nickname);
-        claims.put("social", social);
-        claims.put("roleNames", roleNames);
-        return claims;
-    }
+  public Map<String, Object> getClaims() {
+    Map<String, Object> claims = new LinkedHashMap<>();
+    claims.put("email", email);
+    claims.put("nickname", nickname);
+    claims.put("social", social);
+    claims.put("roleNames", roleNames);
+    return claims;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public String getNickname() {
-        return nickname;
-    }
+  public String getNickname() {
+    return nickname;
+  }
 
-    public boolean isSocial() {
-        return social;
-    }
+  public boolean isSocial() {
+    return social;
+  }
 
-    public List<String> getRoleNames() {
-        return roleNames;
-    }
+  public List<String> getRoleNames() {
+    return roleNames;
+  }
 
-    private static Collection<? extends GrantedAuthority> toAuthorities(List<String> roleNames) {
-        return roleNames.stream()
-                .map(SimpleGrantedAuthority::new)
-                .toList();
-    }
+  private static Collection<? extends GrantedAuthority> toAuthorities(List<String> roleNames) {
+    return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
+  }
 }

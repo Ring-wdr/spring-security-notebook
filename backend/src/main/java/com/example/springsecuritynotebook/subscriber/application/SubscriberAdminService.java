@@ -11,29 +11,27 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SubscriberAdminService {
 
-    private final SubscriberRepository subscriberRepository;
+  private final SubscriberRepository subscriberRepository;
 
-    public SubscriberAdminService(SubscriberRepository subscriberRepository) {
-        this.subscriberRepository = subscriberRepository;
-    }
+  public SubscriberAdminService(SubscriberRepository subscriberRepository) {
+    this.subscriberRepository = subscriberRepository;
+  }
 
-    @Transactional(readOnly = true)
-    public List<SubscriberSummaryResponse> getSubscribers() {
-        return subscriberRepository.findAll().stream()
-                .map(SubscriberSummaryResponse::from)
-                .toList();
-    }
+  @Transactional(readOnly = true)
+  public List<SubscriberSummaryResponse> getSubscribers() {
+    return subscriberRepository.findAll().stream().map(SubscriberSummaryResponse::from).toList();
+  }
 
-    @Transactional
-    public SubscriberSummaryResponse updateRoles(String email, UpdateSubscriberRolesRequest request) {
-        Subscriber subscriber = subscriberRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("ERROR_SUBSCRIBER_NOT_FOUND"));
+  @Transactional
+  public SubscriberSummaryResponse updateRoles(String email, UpdateSubscriberRolesRequest request) {
+    Subscriber subscriber =
+        subscriberRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("ERROR_SUBSCRIBER_NOT_FOUND"));
 
-        subscriber.clearRoles();
-        request.roleNames().stream()
-                .map(SubscriberRole::valueOf)
-                .forEach(subscriber::addRole);
+    subscriber.clearRoles();
+    request.roleNames().stream().map(SubscriberRole::valueOf).forEach(subscriber::addRole);
 
-        return SubscriberSummaryResponse.from(subscriber);
-    }
+    return SubscriberSummaryResponse.from(subscriber);
+  }
 }

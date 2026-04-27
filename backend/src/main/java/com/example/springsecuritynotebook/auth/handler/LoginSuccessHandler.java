@@ -16,26 +16,24 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final AuthService authService;
-    private final ObjectMapper objectMapper;
+  private final AuthService authService;
+  private final ObjectMapper objectMapper;
 
-    public LoginSuccessHandler(AuthService authService, ObjectMapper objectMapper) {
-        this.authService = authService;
-        this.objectMapper = objectMapper;
-    }
+  public LoginSuccessHandler(AuthService authService, ObjectMapper objectMapper) {
+    this.authService = authService;
+    this.objectMapper = objectMapper;
+  }
 
-    @Override
-    public void onAuthenticationSuccess(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Authentication authentication
-    ) throws IOException, ServletException {
-        SubscriberPrincipal principal = (SubscriberPrincipal) authentication.getPrincipal();
-        TokenPairResponse tokenPair = authService.issueTokens(principal);
+  @Override
+  public void onAuthenticationSuccess(
+      HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+      throws IOException, ServletException {
+    SubscriberPrincipal principal = (SubscriberPrincipal) authentication.getPrincipal();
+    TokenPairResponse tokenPair = authService.issueTokens(principal);
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), tokenPair);
-    }
+    response.setStatus(HttpServletResponse.SC_OK);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
+    objectMapper.writeValue(response.getWriter(), tokenPair);
+  }
 }

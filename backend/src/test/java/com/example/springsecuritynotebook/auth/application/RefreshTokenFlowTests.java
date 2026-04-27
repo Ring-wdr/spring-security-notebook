@@ -26,99 +26,93 @@ import tools.jackson.databind.ObjectMapper;
 @ActiveProfiles("test")
 class RefreshTokenFlowTests {
 
-    @Autowired
-    private SubscriberRepository subscriberRepository;
+  @Autowired private SubscriberRepository subscriberRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtService jwtService;
+  @Autowired private JwtService jwtService;
 
-    @Autowired
-    private RefreshTokenStore refreshTokenStore;
+  @Autowired private RefreshTokenStore refreshTokenStore;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+  @Autowired private WebApplicationContext webApplicationContext;
 
-    private MockMvc mockMvc;
+  private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-                .apply(springSecurity())
-                .build();
+  @BeforeEach
+  void setUp() {
+    mockMvc =
+        MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
 
-        subscriberRepository.deleteAll();
-        refreshTokenStore.invalidate("user@example.com");
+    subscriberRepository.deleteAll();
+    refreshTokenStore.invalidate("user@example.com");
 
-        Subscriber subscriber = Subscriber.builder()
-                .email("user@example.com")
-                .password(passwordEncoder.encode("1111"))
-                .nickname("user")
-                .build();
-        subscriber.addRole(SubscriberRole.ROLE_USER);
-        subscriberRepository.save(subscriber);
-    }
+    Subscriber subscriber =
+        Subscriber.builder()
+            .email("user@example.com")
+            .password(passwordEncoder.encode("1111"))
+            .nickname("user")
+            .build();
+    subscriber.addRole(SubscriberRole.ROLE_USER);
+    subscriberRepository.save(subscriber);
+  }
 
-    @Test
-    void expiredAccessAndValidRefreshReturnsNewAccessToken() throws Exception {
-        SubscriberPrincipal principal = new SubscriberPrincipal(
-                "user@example.com",
-                "",
-                "user",
-                false,
-                java.util.List.of("ROLE_USER")
-        );
+  @Test
+  void expiredAccessAndValidRefreshReturnsNewAccessToken() throws Exception {
+    SubscriberPrincipal principal =
+        new SubscriberPrincipal(
+            "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
-        String expiredAccessToken = jwtService.generateAccessToken(principal.getClaims(), -30);
-        String refreshToken = jwtService.generateRefreshToken("user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
-        refreshTokenStore.store("user@example.com", refreshToken, jwtService.getRefreshTokenExpiresInSeconds());
+    String expiredAccessToken = jwtService.generateAccessToken(principal.getClaims(), -30);
+    String refreshToken =
+        jwtService.generateRefreshToken(
+            "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
+    refreshTokenStore.store(
+        "user@example.com", refreshToken, jwtService.getRefreshTokenExpiresInSeconds());
 
-        MvcResult result = mockMvc.perform(post("/api/auth/refresh")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new RefreshTokenRequest(refreshToken))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.grantType").value("Bearer"))
-                .andExpect(jsonPath("$.accessToken").isString())
-                .andExpect(jsonPath("$.refreshToken").isString())
-                .andReturn();
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/auth/refresh")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
+                    .contentType("application/json")
+                    .content(
+                        objectMapper.writeValueAsString(new RefreshTokenRequest(refreshToken))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.grantType").value("Bearer"))
+            .andExpect(jsonPath("$.accessToken").isString())
+            .andExpect(jsonPath("$.refreshToken").isString())
+            .andReturn();
 
-        TokenPairResponse response = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                TokenPairResponse.class
-        );
+    TokenPairResponse response =
+        objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
 
-        assertThat(jwtService.validateToken(response.accessToken()))
-                .containsEntry("email", "user@example.com");
-    }
+    assertThat(jwtService.validateToken(response.accessToken()))
+        .containsEntry("email", "user@example.com");
+  }
 
-    @Test
-    void logoutInvalidatesStoredRefreshToken() throws Exception {
-        String accessToken = loginAndExtractToken("user@example.com", "1111");
+  @Test
+  void logoutInvalidatesStoredRefreshToken() throws Exception {
+    String accessToken = loginAndExtractToken("user@example.com", "1111");
 
-        mockMvc.perform(post("/api/auth/logout")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isNoContent());
+    mockMvc
+        .perform(
+            post("/api/auth/logout").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+        .andExpect(status().isNoContent());
 
-        assertThat(refreshTokenStore.get("user@example.com")).isEmpty();
-    }
+    assertThat(refreshTokenStore.get("user@example.com")).isEmpty();
+  }
 
-    private String loginAndExtractToken(String email, String password) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
-                        .param("email", email)
-                        .param("password", password))
-                .andExpect(status().isOk())
-                .andReturn();
+  private String loginAndExtractToken(String email, String password) throws Exception {
+    MvcResult result =
+        mockMvc
+            .perform(post("/api/auth/login").param("email", email).param("password", password))
+            .andExpect(status().isOk())
+            .andReturn();
 
-        TokenPairResponse response = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                TokenPairResponse.class
-        );
-        return response.accessToken();
-    }
+    TokenPairResponse response =
+        objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
+    return response.accessToken();
+  }
 }

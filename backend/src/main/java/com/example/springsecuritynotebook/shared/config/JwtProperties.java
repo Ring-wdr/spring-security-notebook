@@ -8,9 +8,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "app.jwt")
 public record JwtProperties(
-        @NotBlank String issuer,
-        @NotBlank String secret,
-        @Min(1) int accessTokenMinutes,
-        @Min(1) int refreshTokenMinutes
-) {
-}
+    @NotBlank String issuer,
+    @NotBlank String secret,
+    @Min(1) int accessTokenMinutes,
+    @Min(1) int refreshTokenMinutes) {}

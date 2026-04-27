@@ -17,24 +17,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin/users")
 public class AdminSubscriberController {
 
-    private final SubscriberAdminService subscriberAdminService;
+  private final SubscriberAdminService subscriberAdminService;
 
-    public AdminSubscriberController(SubscriberAdminService subscriberAdminService) {
-        this.subscriberAdminService = subscriberAdminService;
-    }
+  public AdminSubscriberController(SubscriberAdminService subscriberAdminService) {
+    this.subscriberAdminService = subscriberAdminService;
+  }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<SubscriberSummaryResponse> getSubscribers() {
-        return subscriberAdminService.getSubscribers();
-    }
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public List<SubscriberSummaryResponse> getSubscribers() {
+    return subscriberAdminService.getSubscribers();
+  }
 
-    @PatchMapping("/{email}/role")
-    @PreAuthorize("hasRole('ADMIN')")
-    public SubscriberSummaryResponse updateRoles(
-            @PathVariable String email,
-            @Valid @RequestBody UpdateSubscriberRolesRequest request
-    ) {
-        return subscriberAdminService.updateRoles(email, request);
-    }
+  @PatchMapping("/{email}/role")
+  @PreAuthorize("hasRole('ADMIN')")
+  public SubscriberSummaryResponse updateRoles(
+      @PathVariable String email, @Valid @RequestBody UpdateSubscriberRolesRequest request) {
+    return subscriberAdminService.updateRoles(email, request);
+  }
 }

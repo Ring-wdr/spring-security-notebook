@@ -16,42 +16,40 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class SubscriberRepositoryTests {
 
-    @Autowired
-    private SubscriberRepository subscriberRepository;
+  @Autowired private SubscriberRepository subscriberRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private EntityManagerFactory entityManagerFactory;
+  @Autowired private EntityManagerFactory entityManagerFactory;
 
-    @BeforeEach
-    void cleanUp() {
-        subscriberRepository.deleteAll();
-    }
+  @BeforeEach
+  void cleanUp() {
+    subscriberRepository.deleteAll();
+  }
 
-    @Test
-    void saveAndFindSubscriberByEmailLoadsRoles() {
-        Subscriber subscriber = Subscriber.builder()
-                .email("user1@example.com")
-                .password(passwordEncoder.encode("1111"))
-                .nickname("user-one")
-                .build();
-        subscriber.addRole(SubscriberRole.ROLE_USER);
-        subscriber.addRole(SubscriberRole.ROLE_MANAGER);
+  @Test
+  void saveAndFindSubscriberByEmailLoadsRoles() {
+    Subscriber subscriber =
+        Subscriber.builder()
+            .email("user1@example.com")
+            .password(passwordEncoder.encode("1111"))
+            .nickname("user-one")
+            .build();
+    subscriber.addRole(SubscriberRole.ROLE_USER);
+    subscriber.addRole(SubscriberRole.ROLE_MANAGER);
 
-        subscriberRepository.save(subscriber);
+    subscriberRepository.save(subscriber);
 
-        Optional<Subscriber> result = subscriberRepository.findByEmail("user1@example.com");
+    Optional<Subscriber> result = subscriberRepository.findByEmail("user1@example.com");
 
-        assertThat(result).isPresent();
-        Subscriber loadedSubscriber = result.orElseThrow();
-        PersistenceUnitUtil persistenceUnitUtil = entityManagerFactory.getPersistenceUnitUtil();
+    assertThat(result).isPresent();
+    Subscriber loadedSubscriber = result.orElseThrow();
+    PersistenceUnitUtil persistenceUnitUtil = entityManagerFactory.getPersistenceUnitUtil();
 
-        assertThat(loadedSubscriber.getEmail()).isEqualTo("user1@example.com");
-        assertThat(loadedSubscriber.getNickname()).isEqualTo("user-one");
-        assertThat(loadedSubscriber.getRoleList())
-                .containsExactlyInAnyOrder(SubscriberRole.ROLE_USER, SubscriberRole.ROLE_MANAGER);
-        assertThat(persistenceUnitUtil.isLoaded(loadedSubscriber, "roleList")).isTrue();
-    }
+    assertThat(loadedSubscriber.getEmail()).isEqualTo("user1@example.com");
+    assertThat(loadedSubscriber.getNickname()).isEqualTo("user-one");
+    assertThat(loadedSubscriber.getRoleList())
+        .containsExactlyInAnyOrder(SubscriberRole.ROLE_USER, SubscriberRole.ROLE_MANAGER);
+    assertThat(persistenceUnitUtil.isLoaded(loadedSubscriber, "roleList")).isTrue();
+  }
 }

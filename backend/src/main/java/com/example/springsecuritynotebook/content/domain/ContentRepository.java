@@ -5,7 +5,9 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ContentRepository extends JpaRepository<Content, Long> {
-    List<Content> findByPublishedTrueOrderByIdDesc();
-    List<Content> findAllByOrderByIdDesc();
-    Optional<Content> findByIdAndPublishedTrue(Long id);
+  List<Content> findByPublishedTrueOrderByIdDesc();
+
+  List<Content> findAllByOrderByIdDesc();
+
+  Optional<Content> findByIdAndPublishedTrue(Long id);
 }

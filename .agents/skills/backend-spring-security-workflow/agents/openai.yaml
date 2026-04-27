@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend Spring Security Workflow"
+  short_description: "Repo-local backend workflow for Spring Security and JWT"
+  default_prompt: "Use $backend-spring-security-workflow only when editing files under `backend/`. Read the matching learning docs and `$java-springboot`, then run Spotless and Checkstyle verification before finishing."

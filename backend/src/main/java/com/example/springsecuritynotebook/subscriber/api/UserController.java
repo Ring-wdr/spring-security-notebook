@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 public class UserController {
 
-    @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
-    public CurrentUserResponse getCurrentUser(@AuthenticationPrincipal SubscriberPrincipal principal) {
-        return CurrentUserResponse.from(principal);
-    }
+  @GetMapping("/me")
+  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  public CurrentUserResponse getCurrentUser(
+      @AuthenticationPrincipal SubscriberPrincipal principal) {
+    return CurrentUserResponse.from(principal);
+  }
 }
