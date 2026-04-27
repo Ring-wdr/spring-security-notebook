@@ -34,10 +34,12 @@ management:
       show-details: always
 
 app:
+  bootstrap:
+    demo-data-enabled: ${APP_BOOTSTRAP_DEMO_DATA_ENABLED:false}
   client:
     origin: ${APP_CLIENT_ORIGIN:http://localhost:3000}
   jwt:
     issuer: ${APP_JWT_ISSUER:spring-security-notebook}
-    secret: ${APP_JWT_SECRET:change-this-to-a-long-32-char-secret-key}
+    secret: ${APP_JWT_SECRET}
     access-token-minutes: 10
     refresh-token-minutes: 1440

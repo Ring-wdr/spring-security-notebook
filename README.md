@@ -115,6 +115,21 @@ spring-security-notebook/
 - 이 페이지에서는 현재 인증 상태, role, token TTL 메타데이터, `401/403` 차이, refresh 재시도, logout 이후 무효화 포인트를 강의 흐름과 함께 확인할 수 있습니다.
 - raw JWT 문자열은 노출하지 않고 학습에 필요한 메타데이터만 보여줍니다.
 
+## Testing Workflow
+
+- 프론트엔드는 `TDD`를 기본 작업 방식으로 사용합니다. 새 기능이나 버그 수정은 먼저 failing test부터 작성합니다.
+- 프론트 테스트는 두 층으로 나눕니다.
+  - `unit`: 순수 함수, 에러 매핑, 리다이렉트/path helper, role 기반 navigation 계산
+  - `component`: `MSW + RTL + Vitest(jsdom)` 기반 client component 사용자 흐름
+- `async` server component는 직접 테스트하지 않고, 테스트 가능한 pure helper 또는 작은 view seam으로 분리해서 검증합니다.
+- 프론트 기본 검증 명령은 아래 순서를 권장합니다.
+  - `cd frontend`
+  - `npm run lint`
+  - `npm run test:unit`
+  - `npm run test:components`
+  - `npm test`
+  - `npm run build`
+
 ## Local Infra Quick Start
 
 이 프로젝트의 로컬 인프라는 `Docker Desktop + docker compose` 기준으로 관리합니다.
@@ -133,6 +148,13 @@ spring-security-notebook/
 - Valkey: `localhost:6379`
 
 백엔드 헬스 엔드포인트는 `http://localhost:8080/actuator/health`입니다.
+
+## Backend Runtime Notes
+
+- 백엔드는 이제 `APP_JWT_SECRET` 없이 기동하지 않도록 구성했습니다. 로컬 실행 전 루트 `.env` 또는 실행 환경에 JWT secret을 반드시 설정해야 합니다.
+- 데모 계정과 샘플 콘텐츠 bootstrap은 기본적으로 비활성화되어 있습니다.
+- 로컬 학습용으로 데모 데이터를 자동 주입하려면 `dev` 프로필로 실행하거나 `APP_BOOTSTRAP_DEMO_DATA_ENABLED=true`를 명시적으로 설정합니다.
+- `application-test.yml`은 테스트 전용 JWT secret을 별도로 사용하므로 `.\mvnw.cmd test` 실행에는 추가 수동 설정이 필요하지 않습니다.
 
 ## Guide Summary
 

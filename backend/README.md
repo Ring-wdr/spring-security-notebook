@@ -29,6 +29,13 @@ backend/
 - 인프라 실행: `docker compose up -d`
 - 테스트: `.\mvnw.cmd test`
 
+## Runtime Defaults
+
+- 운영/공용 환경에서 예측 가능한 시크릿으로 부팅되지 않도록 `APP_JWT_SECRET`는 필수 환경변수로 사용합니다.
+- 데모 계정과 샘플 콘텐츠 초기화는 기본 비활성화 상태이며, `app.bootstrap.demo-data-enabled=true`일 때만 동작합니다.
+- 로컬 학습용으로 데모 데이터를 넣고 싶다면 `dev` 프로필로 실행하거나 `APP_BOOTSTRAP_DEMO_DATA_ENABLED=true`를 설정합니다.
+- 테스트는 `src/test/resources/application-test.yml`의 전용 secret을 사용하므로 별도 secret 주입 없이 실행할 수 있습니다.
+
 ## Notes
 
 - 이 프로젝트는 공식 Initializr 생성물을 기준으로 점진적으로 확장합니다.

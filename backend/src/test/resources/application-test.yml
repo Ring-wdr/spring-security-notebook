@@ -2,3 +2,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+app:
+  jwt:
+    secret: test-only-secret-key-with-32-characters

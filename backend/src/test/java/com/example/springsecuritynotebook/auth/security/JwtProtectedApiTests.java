@@ -2,6 +2,7 @@ package com.example.springsecuritynotebook.auth.security;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,6 +44,7 @@ class JwtProtectedApiTests {
 
   private MockMvc mockMvc;
   private String userToken;
+  private String adminToken;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -79,6 +82,7 @@ class JwtProtectedApiTests {
             .build());
 
     this.userToken = loginAndExtractToken("user@example.com", "1111");
+    this.adminToken = loginAndExtractToken("admin@example.com", "1111");
   }
 
   @Test
@@ -153,6 +157,43 @@ class JwtProtectedApiTests {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].published").exists());
+  }
+
+  @Test
+  void missingContentReturnsReadableNotFoundMessage() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/content/999999").header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.error").value("ERROR_CONTENT_NOT_FOUND"))
+        .andExpect(jsonPath("$.message").value("Content was not found."));
+  }
+
+  @Test
+  void adminCanUpdateSubscriberRoles() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",\"ROLE_MANAGER\"]}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value("user@example.com"))
+        .andExpect(jsonPath("$.roleNames[0]").value("ROLE_USER"))
+        .andExpect(jsonPath("$.roleNames[1]").value("ROLE_MANAGER"));
+  }
+
+  @Test
+  void emptyRoleListReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
   }
 
   private String loginAndExtractToken(String email, String password) throws Exception {

@@ -33,11 +33,7 @@ public class ContentController {
   public List<ContentSummaryResponse> getContents(
       @AuthenticationPrincipal SubscriberPrincipal principal,
       @RequestParam(defaultValue = "false") boolean includeAll) {
-    if (includeAll && isPrivileged(principal)) {
-      return contentService.getAllContents();
-    }
-
-    return contentService.getPublishedContents();
+    return contentService.getContents(principal, includeAll);
   }
 
   @GetMapping("/{contentId}")
@@ -46,11 +42,7 @@ public class ContentController {
       @AuthenticationPrincipal SubscriberPrincipal principal,
       @PathVariable Long contentId,
       @RequestParam(defaultValue = "false") boolean includeAll) {
-    if (includeAll && isPrivileged(principal)) {
-      return contentService.getAnyContent(contentId);
-    }
-
-    return contentService.getPublishedContent(contentId);
+    return contentService.getContent(principal, contentId, includeAll);
   }
 
   @PostMapping
@@ -64,11 +56,5 @@ public class ContentController {
   public ContentDetailResponse updateContent(
       @PathVariable Long contentId, @Valid @RequestBody ContentUpsertRequest request) {
     return contentService.updateContent(contentId, request);
-  }
-
-  private boolean isPrivileged(SubscriberPrincipal principal) {
-    return principal != null
-        && principal.getRoleNames().stream()
-            .anyMatch(role -> role.equals("ROLE_MANAGER") || role.equals("ROLE_ADMIN"));
   }
 }

@@ -1,5 +1,6 @@
 package com.example.springsecuritynotebook.content.application;
 
+import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.exception.ResourceNotFoundException;
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.domain.ContentRepository;
@@ -17,21 +18,38 @@ public class ContentService {
   }
 
   @Transactional(readOnly = true)
-  public List<ContentSummaryResponse> getPublishedContents() {
+  public List<ContentSummaryResponse> getContents(
+      SubscriberPrincipal principal, boolean includeAll) {
+    if (includeAll && canViewAll(principal)) {
+      return getAllContents();
+    }
+
+    return getPublishedContents();
+  }
+
+  @Transactional(readOnly = true)
+  public ContentDetailResponse getContent(
+      SubscriberPrincipal principal, Long contentId, boolean includeAll) {
+    if (includeAll && canViewAll(principal)) {
+      return getAnyContent(contentId);
+    }
+
+    return getPublishedContent(contentId);
+  }
+
+  private List<ContentSummaryResponse> getPublishedContents() {
     return contentRepository.findByPublishedTrueOrderByIdDesc().stream()
         .map(ContentSummaryResponse::from)
         .toList();
   }
 
-  @Transactional(readOnly = true)
-  public List<ContentSummaryResponse> getAllContents() {
+  private List<ContentSummaryResponse> getAllContents() {
     return contentRepository.findAllByOrderByIdDesc().stream()
         .map(ContentSummaryResponse::from)
         .toList();
   }
 
-  @Transactional(readOnly = true)
-  public ContentDetailResponse getPublishedContent(Long contentId) {
+  private ContentDetailResponse getPublishedContent(Long contentId) {
     Content content =
         contentRepository
             .findByIdAndPublishedTrue(contentId)
@@ -39,8 +57,7 @@ public class ContentService {
     return ContentDetailResponse.from(content);
   }
 
-  @Transactional(readOnly = true)
-  public ContentDetailResponse getAnyContent(Long contentId) {
+  private ContentDetailResponse getAnyContent(Long contentId) {
     Content content =
         contentRepository
             .findById(contentId)
@@ -70,5 +87,11 @@ public class ContentService {
 
     content.update(request.title(), request.body(), request.category(), request.published());
     return ContentDetailResponse.from(content);
+  }
+
+  private boolean canViewAll(SubscriberPrincipal principal) {
+    return principal != null
+        && principal.getRoleNames().stream()
+            .anyMatch(role -> role.equals("ROLE_MANAGER") || role.equals("ROLE_ADMIN"));
   }
 }
