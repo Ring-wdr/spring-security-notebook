@@ -1,7 +1,10 @@
 package com.example.springsecuritynotebook.auth.security;
 
+import com.example.springsecuritynotebook.auth.application.AccessTokenBlocklist;
 import com.example.springsecuritynotebook.auth.application.JwtService;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
+import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
+import com.example.springsecuritynotebook.auth.handler.AuthErrorMessages;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,18 +14,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtService jwtService;
+  private final AccessTokenBlocklist accessTokenBlocklist;
+  private final ObjectMapper objectMapper;
 
-  public JwtAuthenticationFilter(JwtService jwtService) {
+  public JwtAuthenticationFilter(
+      JwtService jwtService, AccessTokenBlocklist accessTokenBlocklist, ObjectMapper objectMapper) {
     this.jwtService = jwtService;
+    this.accessTokenBlocklist = accessTokenBlocklist;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -42,13 +52,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+    if (authorizationHeader == null) {
       filterChain.doFilter(request, response);
       return;
     }
 
+    if (!authorizationHeader.startsWith("Bearer ")) {
+      writeAccessTokenError(response);
+      return;
+    }
+
     String token = authorizationHeader.substring(7);
-    Map<String, Object> claims = jwtService.validateToken(token);
+    if (accessTokenBlocklist.isRevoked(token)) {
+      writeAccessTokenError(response);
+      return;
+    }
+
+    Map<String, Object> claims;
+    try {
+      claims = jwtService.validateToken(token);
+    } catch (CustomJwtException exception) {
+      writeAccessTokenError(response);
+      return;
+    }
+
     SubscriberPrincipal principal =
         new SubscriberPrincipal(
             (String) claims.get("email"),
@@ -70,5 +97,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     return List.of();
+  }
+
+  private void writeAccessTokenError(HttpServletResponse response) throws IOException {
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
+    objectMapper.writeValue(
+        response.getWriter(),
+        Map.of(
+            "error",
+            "ERROR_ACCESS_TOKEN",
+            "message",
+            AuthErrorMessages.getMessage("ERROR_ACCESS_TOKEN")));
   }
 }

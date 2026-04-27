@@ -2,6 +2,7 @@ package com.example.springsecuritynotebook.auth.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -102,6 +103,112 @@ class RefreshTokenFlowTests {
         .andExpect(status().isNoContent());
 
     assertThat(refreshTokenStore.get("user@example.com")).isEmpty();
+  }
+
+  @Test
+  void refreshAfterLogoutReturnsAccessTokenErrorMessage() throws Exception {
+    MvcResult loginResult =
+        mockMvc
+            .perform(
+                post("/api/auth/login")
+                    .param("email", "user@example.com")
+                    .param("password", "1111"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    TokenPairResponse loginResponse =
+        objectMapper.readValue(
+            loginResult.getResponse().getContentAsString(), TokenPairResponse.class);
+
+    mockMvc
+        .perform(
+            post("/api/auth/logout")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + loginResponse.accessToken()))
+        .andExpect(status().isNoContent());
+
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + loginResponse.accessToken())
+                .contentType("application/json")
+                .content(
+                    objectMapper.writeValueAsString(
+                        new RefreshTokenRequest(loginResponse.refreshToken()))))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
+  }
+
+  @Test
+  void logoutRevokesCurrentAccessTokenForProtectedApis() throws Exception {
+    String accessToken = loginAndExtractToken("user@example.com", "1111");
+
+    mockMvc
+        .perform(
+            post("/api/auth/logout").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+        .andExpect(status().isNoContent());
+
+    mockMvc
+        .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
+  }
+
+  @Test
+  void refreshNearExpiryRotatesRefreshTokenAndUpdatesStore() throws Exception {
+    SubscriberPrincipal principal =
+        new SubscriberPrincipal(
+            "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
+
+    String expiredAccessToken = jwtService.generateAccessToken(principal.getClaims(), -30);
+    String refreshToken = jwtService.generateRefreshToken("user@example.com", 3500);
+    refreshTokenStore.store("user@example.com", refreshToken, 3500);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/auth/refresh")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
+                    .contentType("application/json")
+                    .content(
+                        objectMapper.writeValueAsString(new RefreshTokenRequest(refreshToken))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.refreshToken").isString())
+            .andReturn();
+
+    TokenPairResponse response =
+        objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
+
+    assertThat(response.refreshToken()).isNotEqualTo(refreshToken);
+    assertThat(response.refreshTokenExpiresIn())
+        .isEqualTo(jwtService.getRefreshTokenExpiresInSeconds());
+    assertThat(refreshTokenStore.get("user@example.com")).contains(response.refreshToken());
+  }
+
+  @Test
+  void refreshWithoutAuthorizationHeaderReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(new RefreshTokenRequest("token"))))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
+  void refreshWithMalformedJsonReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer malformed-access")
+                .contentType("application/json")
+                .content("{"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
   }
 
   private String loginAndExtractToken(String email, String password) throws Exception {

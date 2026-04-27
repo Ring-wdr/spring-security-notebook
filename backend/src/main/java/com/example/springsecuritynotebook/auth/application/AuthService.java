@@ -9,10 +9,15 @@ public class AuthService {
 
   private final JwtService jwtService;
   private final RefreshTokenStore refreshTokenStore;
+  private final AccessTokenBlocklist accessTokenBlocklist;
 
-  public AuthService(JwtService jwtService, RefreshTokenStore refreshTokenStore) {
+  public AuthService(
+      JwtService jwtService,
+      RefreshTokenStore refreshTokenStore,
+      AccessTokenBlocklist accessTokenBlocklist) {
     this.jwtService = jwtService;
     this.refreshTokenStore = refreshTokenStore;
+    this.accessTokenBlocklist = accessTokenBlocklist;
   }
 
   public TokenPairResponse issueTokens(SubscriberPrincipal principal) {
@@ -24,6 +29,10 @@ public class AuthService {
 
   public TokenPairResponse refresh(String authorizationHeader, RefreshTokenRequest request) {
     String accessToken = extractBearerToken(authorizationHeader);
+    if (accessTokenBlocklist.isRevoked(accessToken)) {
+      throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+    }
+
     Map<String, Object> accessClaims = jwtService.readClaimsAllowExpired(accessToken);
     String email = (String) accessClaims.get("email");
     if (email == null || email.isBlank()) {
@@ -73,8 +82,14 @@ public class AuthService {
         refreshTokenExpiresIn);
   }
 
-  public void logout(SubscriberPrincipal principal) {
+  public void logout(SubscriberPrincipal principal, String authorizationHeader) {
+    String accessToken = extractBearerToken(authorizationHeader);
     refreshTokenStore.invalidate(principal.getEmail());
+    try {
+      accessTokenBlocklist.revoke(accessToken, jwtService.getRemainingLifetimeSeconds(accessToken));
+    } catch (CustomJwtException ignored) {
+      // The refresh token must still be invalidated even if the access token is at expiry boundary.
+    }
   }
 
   private String extractBearerToken(String authorizationHeader) {

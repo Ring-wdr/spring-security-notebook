@@ -29,6 +29,12 @@ public class ApiAccessDeniedHandler implements AccessDeniedHandler {
     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
-    objectMapper.writeValue(response.getWriter(), Map.of("error", "ERROR_ACCESS_DENIED"));
+    objectMapper.writeValue(
+        response.getWriter(),
+        Map.of(
+            "error",
+            "ERROR_ACCESS_DENIED",
+            "message",
+            AuthErrorMessages.getMessage("ERROR_ACCESS_DENIED")));
   }
 }

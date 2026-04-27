@@ -28,6 +28,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
     objectMapper.writeValue(
-        response.getWriter(), Map.of("error", "ERROR_LOGIN", "message", exception.getMessage()));
+        response.getWriter(),
+        Map.of("error", "ERROR_LOGIN", "message", AuthErrorMessages.getMessage("ERROR_LOGIN")));
   }
 }

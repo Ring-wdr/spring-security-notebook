@@ -61,6 +61,8 @@ spring-security-notebook/
 ## Study Materials
 
 - 핵심 요약 가이드: [spring-security-architecture-jwt-study-guide.md](/D:/spring-security-notebook/docs/spring-security-architecture-jwt-study-guide.md)
+- 강의 구현 audit: [spring-security-lecture-gap-audit.md](/D:/spring-security-notebook/docs/spring-security-lecture-gap-audit.md)
+- 구현 설계 문서: [2026-04-27-spring-security-lecture-gap-audit-design.md](/D:/spring-security-notebook/docs/superpowers/specs/2026-04-27-spring-security-lecture-gap-audit-design.md)
 - 단계별 실습 문서:
   - [01-concepts-and-architecture.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md)
   - [02-security-config.md](/D:/spring-security-notebook/docs/spring-security-notebooklm-docs/02-security-config.md)
@@ -94,6 +96,12 @@ spring-security-notebook/
 2. 이후 `docs/spring-security-notebooklm-docs/` 문서를 번호 순서대로 따라가며 구현합니다.
 3. 백엔드 인증 흐름과 Next.js 프론트엔드 인증 흐름을 함께 연결해서 점검합니다.
 4. 마지막에는 JWT 발급, 인증 필터, Refresh Token, 예외 처리, 테스트 흐름을 하나의 시스템으로 복습합니다.
+
+## Learning Surface
+
+- 브라우저 학습 페이지: `frontend` 실행 후 `/learn`
+- 이 페이지에서는 현재 인증 상태, role, token TTL 메타데이터, `401/403` 차이, refresh 재시도, logout 이후 무효화 포인트를 강의 흐름과 함께 확인할 수 있습니다.
+- raw JWT 문자열은 노출하지 않고 학습에 필요한 메타데이터만 보여줍니다.
 
 ## Local Infra Quick Start
 

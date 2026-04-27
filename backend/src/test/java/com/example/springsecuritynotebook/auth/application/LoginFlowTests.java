@@ -89,6 +89,6 @@ class LoginFlowTests {
                 .param("password", "wrong-password"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error").value("ERROR_LOGIN"))
-        .andExpect(jsonPath("$.message").isString());
+        .andExpect(jsonPath("$.message").value("Login failed."));
   }
 }

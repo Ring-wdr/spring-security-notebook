@@ -86,7 +86,8 @@ class JwtProtectedApiTests {
     mockMvc
         .perform(get("/api/users/me"))
         .andExpect(status().isUnauthorized())
-        .andExpect(jsonPath("$.error").value("ERROR_UNAUTHORIZED"));
+        .andExpect(jsonPath("$.error").value("ERROR_UNAUTHORIZED"))
+        .andExpect(jsonPath("$.message").value("Authentication is required."));
   }
 
   @Test
@@ -94,7 +95,8 @@ class JwtProtectedApiTests {
     mockMvc
         .perform(get("/api/admin/users").header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
         .andExpect(status().isForbidden())
-        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_DENIED"));
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_DENIED"))
+        .andExpect(jsonPath("$.message").value("You do not have permission."));
   }
 
   @Test
@@ -104,6 +106,24 @@ class JwtProtectedApiTests {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.email").value("user@example.com"))
         .andExpect(jsonPath("$.roleNames[0]").value("ROLE_USER"));
+  }
+
+  @Test
+  void malformedBearerTokenReturnsAccessTokenErrorJson() throws Exception {
+    mockMvc
+        .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
+  }
+
+  @Test
+  void malformedAuthorizationSchemeReturnsAccessTokenErrorJson() throws Exception {
+    mockMvc
+        .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Token abc"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
   }
 
   @Test

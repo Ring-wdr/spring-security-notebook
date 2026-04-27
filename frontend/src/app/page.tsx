@@ -26,7 +26,12 @@ export default function Home() {
             session.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <ShortcutCard
+            title="Learn"
+            body="Follow the 10 lecture checkpoints with live auth metadata and protected-route examples."
+            href="/learn"
+          />
           <ShortcutCard
             title="Login"
             body="Start the Spring Security form-login flow and receive access + refresh tokens."

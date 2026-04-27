@@ -40,6 +40,7 @@ function Navigation({ session }: { session: StoredSession | null }) {
   const roleNames = session?.user?.roleNames ?? [];
   const navItems = [
     { href: "/", label: "Overview", visible: true },
+    { href: "/learn", label: "Learn", visible: true },
     { href: "/login", label: "Login", visible: !session },
     { href: "/me", label: "My Profile", visible: Boolean(session) },
     { href: "/content", label: "Contents", visible: Boolean(session) },

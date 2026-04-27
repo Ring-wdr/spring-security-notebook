@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -80,6 +81,19 @@ public class JwtService {
     return jwtProperties.refreshTokenMinutes() * 60L;
   }
 
+  public long getRemainingLifetimeSeconds(String token) {
+    Claims claims;
+    try {
+      claims = parseClaims(token);
+    } catch (JwtException | IllegalArgumentException exception) {
+      throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+    }
+
+    long remainingSeconds =
+        claims.getExpiration().toInstant().getEpochSecond() - Instant.now().getEpochSecond();
+    return Math.max(remainingSeconds, 0L);
+  }
+
   private Claims parseClaims(String token) {
     return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
   }
@@ -98,6 +112,7 @@ public class JwtService {
 
     return Jwts.builder()
         .issuer(jwtProperties.issuer())
+        .id(UUID.randomUUID().toString())
         .claims(new LinkedHashMap<>(claims))
         .issuedAt(Date.from(now))
         .expiration(Date.from(expiration))
