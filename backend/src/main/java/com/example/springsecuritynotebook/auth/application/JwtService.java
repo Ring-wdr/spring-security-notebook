@@ -1,7 +1,9 @@
 package com.example.springsecuritynotebook.auth.application;
 
+import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
 import com.example.springsecuritynotebook.shared.config.JwtProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -40,11 +42,16 @@ public class JwtService {
     }
 
     public Map<String, Object> validateToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(signingKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims;
+        try {
+            claims = Jwts.parser()
+                    .verifyWith(signingKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException exception) {
+            throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+        }
 
         Map<String, Object> result = new LinkedHashMap<>(claims);
         result.remove("exp");
