@@ -54,7 +54,7 @@ spring-security-notebook/
 
 각 영역의 실습 초점은 다음과 같습니다.
 
-- `backend`: `start.spring.io`로 생성한 Spring Boot 프로젝트이며 현재는 Maven wrapper, JPA, Security, Validation, H2, Lombok 구성을 포함합니다.
+- `backend`: `start.spring.io`로 생성한 Spring Boot 프로젝트이며 현재는 Maven wrapper, JPA, Security, Validation, PostgreSQL, Valkey 연동, Actuator 구성을 포함합니다.
 - `frontend`: `create-next-app`으로 생성한 Next.js App Router 프로젝트이며 현재는 TypeScript, ESLint, Tailwind 기본 구성을 포함합니다.
 - `target/`, `.next/`, `node_modules/` 같은 빌드 산출물은 문서 구조 설명에서 제외합니다.
 
@@ -94,6 +94,25 @@ spring-security-notebook/
 2. 이후 `docs/spring-security-notebooklm-docs/` 문서를 번호 순서대로 따라가며 구현합니다.
 3. 백엔드 인증 흐름과 Next.js 프론트엔드 인증 흐름을 함께 연결해서 점검합니다.
 4. 마지막에는 JWT 발급, 인증 필터, Refresh Token, 예외 처리, 테스트 흐름을 하나의 시스템으로 복습합니다.
+
+## Local Infra Quick Start
+
+이 프로젝트의 로컬 인프라는 `Docker Desktop + docker compose` 기준으로 관리합니다.
+
+1. 루트에서 환경 파일을 준비합니다.
+   - `Copy-Item .env.example .env`
+2. 인프라를 실행합니다.
+   - `docker compose up -d`
+3. backend 테스트로 PostgreSQL/Valkey 연결을 확인합니다.
+   - `cd backend`
+   - `.\mvnw.cmd test`
+
+기본 서비스는 아래 두 가지입니다.
+
+- PostgreSQL: `localhost:5432`
+- Valkey: `localhost:6379`
+
+백엔드 헬스 엔드포인트는 `http://localhost:8080/actuator/health`입니다.
 
 ## Guide Summary
 
