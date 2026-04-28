@@ -1,7 +1,7 @@
 package com.example.springsecuritynotebook.shared.bootstrap;
 
 import com.example.springsecuritynotebook.content.domain.Content;
-import com.example.springsecuritynotebook.content.domain.ContentRepository;
+import com.example.springsecuritynotebook.content.persistence.ContentRepository;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import com.example.springsecuritynotebook.subscriber.persistence.SubscriberRepository;
