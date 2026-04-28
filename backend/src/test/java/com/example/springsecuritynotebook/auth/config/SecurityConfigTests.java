@@ -67,6 +67,16 @@ class SecurityConfigTests {
   }
 
   @Test
+  void openApiDocsExposeFormLoginEndpoint() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("\"/api/auth/login\"")))
+        .andExpect(content().string(containsString("\"application/x-www-form-urlencoded\"")))
+        .andExpect(content().string(containsString("\"LoginRequest\"")));
+  }
+
+  @Test
   void swaggerUiIsAccessibleWithoutAuthentication() throws Exception {
     mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
   }

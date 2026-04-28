@@ -11,7 +11,7 @@
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:components": "vitest run --config vitest.components.config.ts",
     "test:watch": "vitest",
-    "gen:api": "openapi-generator-cli generate -c openapi-generator.config.json --global-property=modelDocs=false,modelTests=false,apiDocs=false,apiTests=false --openapi-generator-ignore-list README.md,package.json,tsconfig.json,tsconfig.esm.json,.npmignore,docs/** --minimal-update"
+    "gen:api": "node -e \"fs.rmSync('src/generated/openapi',{recursive:true,force:true})\" && openapi-generator-cli generate -c openapi-generator.config.json --global-property=modelDocs=false,modelTests=false,apiDocs=false,apiTests=false --openapi-generator-ignore-list README.md,package.json,tsconfig.json,tsconfig.esm.json,.npmignore,docs/** --minimal-update"
   },
   "dependencies": {
     "next": "16.2.4",

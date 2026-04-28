@@ -196,6 +196,26 @@ class JwtProtectedApiTests {
         .andExpect(jsonPath("$.message").value("Request payload is invalid."));
   }
 
+  @Test
+  void missingPublishedFieldReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "Missing published",
+                      "body": "payload omits published",
+                      "category": "security"
+                    }
+                    """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
   private String loginAndExtractToken(String email, String password) throws Exception {
     MvcResult result =
         mockMvc

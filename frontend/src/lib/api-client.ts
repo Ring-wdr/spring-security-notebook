@@ -2,6 +2,7 @@
 
 import {
   AdminSubscriberControllerApi,
+  AuthControllerApi,
   Configuration,
   ContentControllerApi,
   ResponseError,
@@ -35,6 +36,7 @@ const browserApiConfiguration = new Configuration({
 
 export const backendApi = {
   adminSubscribers: new AdminSubscriberControllerApi(browserApiConfiguration),
+  auth: new AuthControllerApi(browserApiConfiguration),
   content: new ContentControllerApi(browserApiConfiguration),
 };
 

@@ -40,6 +40,43 @@ describe("apiRequest", () => {
     fetchMock.mockRestore();
   });
 
+  it("uses generated form login requests for the Spring Security login endpoint", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json({
+          grantType: "Bearer",
+          accessToken: "access-token",
+          refreshToken: "refresh-token",
+          accessTokenExpiresIn: 600,
+          refreshTokenExpiresIn: 86400,
+        }),
+      );
+
+    const response = await apiRequest(() =>
+      backendApi.auth.login({
+        email: "manager@example.com",
+        password: "1111",
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+
+    expect(response.accessToken).toBe("access-token");
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/login");
+    expect(init).toMatchObject({
+      cache: "no-store",
+      method: "POST",
+    });
+    expect(init?.body).toBeInstanceOf(URLSearchParams);
+    expect((init?.body as URLSearchParams).get("email")).toBe(
+      "manager@example.com",
+    );
+    expect((init?.body as URLSearchParams).get("password")).toBe("1111");
+
+    fetchMock.mockRestore();
+  });
+
   it("throws a structured client error with backend code and message", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")

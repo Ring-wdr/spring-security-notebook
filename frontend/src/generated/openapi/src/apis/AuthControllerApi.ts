@@ -19,6 +19,11 @@ import type {
   TokenPairResponse,
 } from '../models/index';
 
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
 export interface RefreshRequest {
     refreshTokenRequest: RefreshTokenRequest;
 }
@@ -30,6 +35,29 @@ export interface RefreshRequest {
  * @interface AuthControllerApiInterface
  */
 export interface AuthControllerApiInterface {
+    /**
+     * Creates request options for login without sending the request
+     * @param {string} email 
+     * @param {string} password 
+     * @throws {RequiredError}
+     * @memberof AuthControllerApiInterface
+     */
+    loginRequestOpts(requestParameters: LoginRequest): Promise<runtime.RequestOpts>;
+
+    /**
+     * 
+     * @param {string} email 
+     * @param {string} password 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthControllerApiInterface
+     */
+    loginRaw(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>>;
+
+    /**
+     */
+    login(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse>;
+
     /**
      * Creates request options for logout without sending the request
      * @throws {RequiredError}
@@ -76,6 +104,78 @@ export interface AuthControllerApiInterface {
  * 
  */
 export class AuthControllerApi extends runtime.BaseAPI implements AuthControllerApiInterface {
+
+    /**
+     * Creates request options for login without sending the request
+     */
+    async loginRequestOpts(requestParameters: LoginRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['email'] == null) {
+            throw new runtime.RequiredError(
+                'email',
+                'Required parameter "email" was null or undefined when calling login().'
+            );
+        }
+
+        if (requestParameters['password'] == null) {
+            throw new runtime.RequiredError(
+                'password',
+                'Required parameter "password" was null or undefined when calling login().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'application/x-www-form-urlencoded' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['email'] != null) {
+            formParams.append('email', requestParameters['email'] as any);
+        }
+
+        if (requestParameters['password'] != null) {
+            formParams.append('password', requestParameters['password'] as any);
+        }
+
+
+        let urlPath = `/api/auth/login`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        };
+    }
+
+    /**
+     */
+    async loginRaw(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
+        const requestOptions = await this.loginRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response);
+    }
+
+    /**
+     */
+    async login(requestParameters: LoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
+        const response = await this.loginRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for logout without sending the request
