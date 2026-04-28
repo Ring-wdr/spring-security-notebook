@@ -31,6 +31,8 @@ describe("apiRequest", () => {
     ]);
     expect(fetchMock).toHaveBeenCalledWith("/api/content?includeAll=true", {
       body: undefined,
+      cache: "no-store",
+      credentials: undefined,
       headers: {},
       method: "GET",
     });

@@ -4,6 +4,7 @@ import com.example.springsecuritynotebook.auth.application.AuthService;
 import com.example.springsecuritynotebook.auth.application.RefreshTokenRequest;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.application.TokenPairResponse;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,8 @@ public class AuthController {
 
   @PostMapping("/refresh")
   public TokenPairResponse refresh(
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+      @Parameter(hidden = true) @RequestHeader(HttpHeaders.AUTHORIZATION)
+          String authorizationHeader,
       @Valid @RequestBody RefreshTokenRequest request) {
     return authService.refresh(authorizationHeader, request);
   }
@@ -36,7 +38,8 @@ public class AuthController {
   @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal SubscriberPrincipal principal,
-      @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
+      @Parameter(hidden = true) @RequestHeader(HttpHeaders.AUTHORIZATION)
+          String authorizationHeader) {
     authService.logout(principal, authorizationHeader);
     return ResponseEntity.noContent().build();
   }

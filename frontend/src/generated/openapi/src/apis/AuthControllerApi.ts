@@ -19,12 +19,7 @@ import type {
   TokenPairResponse,
 } from '../models/index';
 
-export interface LogoutRequest {
-    authorization: string;
-}
-
 export interface RefreshRequest {
-    authorization: string;
     refreshTokenRequest: RefreshTokenRequest;
 }
 
@@ -37,28 +32,25 @@ export interface RefreshRequest {
 export interface AuthControllerApiInterface {
     /**
      * Creates request options for logout without sending the request
-     * @param {string} authorization 
      * @throws {RequiredError}
      * @memberof AuthControllerApiInterface
      */
-    logoutRequestOpts(requestParameters: LogoutRequest): Promise<runtime.RequestOpts>;
+    logoutRequestOpts(): Promise<runtime.RequestOpts>;
 
     /**
      * 
-     * @param {string} authorization 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AuthControllerApiInterface
      */
-    logoutRaw(requestParameters: LogoutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    logoutRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
 
     /**
      */
-    logout(requestParameters: LogoutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    logout(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
      * Creates request options for refresh without sending the request
-     * @param {string} authorization 
      * @param {RefreshTokenRequest} refreshTokenRequest 
      * @throws {RequiredError}
      * @memberof AuthControllerApiInterface
@@ -67,7 +59,6 @@ export interface AuthControllerApiInterface {
 
     /**
      * 
-     * @param {string} authorization 
      * @param {RefreshTokenRequest} refreshTokenRequest 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -89,21 +80,10 @@ export class AuthControllerApi extends runtime.BaseAPI implements AuthController
     /**
      * Creates request options for logout without sending the request
      */
-    async logoutRequestOpts(requestParameters: LogoutRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['authorization'] == null) {
-            throw new runtime.RequiredError(
-                'authorization',
-                'Required parameter "authorization" was null or undefined when calling logout().'
-            );
-        }
-
+    async logoutRequestOpts(): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['authorization'] != null) {
-            headerParameters['Authorization'] = String(requestParameters['authorization']);
-        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -126,8 +106,8 @@ export class AuthControllerApi extends runtime.BaseAPI implements AuthController
 
     /**
      */
-    async logoutRaw(requestParameters: LogoutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const requestOptions = await this.logoutRequestOpts(requestParameters);
+    async logoutRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.logoutRequestOpts();
         const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -135,21 +115,14 @@ export class AuthControllerApi extends runtime.BaseAPI implements AuthController
 
     /**
      */
-    async logout(requestParameters: LogoutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.logoutRaw(requestParameters, initOverrides);
+    async logout(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.logoutRaw(initOverrides);
     }
 
     /**
      * Creates request options for refresh without sending the request
      */
     async refreshRequestOpts(requestParameters: RefreshRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['authorization'] == null) {
-            throw new runtime.RequiredError(
-                'authorization',
-                'Required parameter "authorization" was null or undefined when calling refresh().'
-            );
-        }
-
         if (requestParameters['refreshTokenRequest'] == null) {
             throw new runtime.RequiredError(
                 'refreshTokenRequest',
@@ -162,10 +135,6 @@ export class AuthControllerApi extends runtime.BaseAPI implements AuthController
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
-
-        if (requestParameters['authorization'] != null) {
-            headerParameters['Authorization'] = String(requestParameters['authorization']);
-        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;

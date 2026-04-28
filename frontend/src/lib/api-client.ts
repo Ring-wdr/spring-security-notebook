@@ -25,6 +25,12 @@ export class ApiClientError extends Error {
 
 const browserApiConfiguration = new Configuration({
   basePath: "",
+  fetchApi(input, init) {
+    return fetch(input, {
+      ...init,
+      cache: "no-store",
+    });
+  },
 });
 
 export const backendApi = {
