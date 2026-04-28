@@ -58,18 +58,22 @@ public class SubscriberPrincipal extends User {
   }
 
   private static Collection<? extends GrantedAuthority> toAuthorities(List<String> roleNames) {
-    LinkedHashSet<String> authorityNames = new LinkedHashSet<>(roleNames);
+    List<SubscriberRole> roles =
+        roleNames.stream().map(SubscriberPrincipal::findRole).flatMap(Optional::stream).toList();
 
-    roleNames.stream()
-        .map(SubscriberPrincipal::findRole)
-        .flatMap(Optional::stream)
-        .flatMap(role -> role.getPermissionNames().stream())
-        .forEach(authorityNames::add);
+    LinkedHashSet<String> authorityNames = new LinkedHashSet<>();
+    roles.stream().map(SubscriberRole::name).forEach(authorityNames::add);
+
+    roles.stream().flatMap(role -> role.getPermissionNames().stream()).forEach(authorityNames::add);
 
     return authorityNames.stream().map(SimpleGrantedAuthority::new).toList();
   }
 
   private static Optional<SubscriberRole> findRole(String roleName) {
+    if (roleName == null) {
+      return Optional.empty();
+    }
+
     try {
       return Optional.of(SubscriberRole.valueOf(roleName));
     } catch (IllegalArgumentException exception) {

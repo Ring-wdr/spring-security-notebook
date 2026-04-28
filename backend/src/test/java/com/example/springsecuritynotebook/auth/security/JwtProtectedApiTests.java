@@ -276,6 +276,32 @@ class JwtProtectedApiTests {
   }
 
   @Test
+  void blankRoleNameReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",\"\"]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
+  void nullRoleNameReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",null]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
   void missingPublishedFieldReturnsBadRequestJson() throws Exception {
     mockMvc
         .perform(

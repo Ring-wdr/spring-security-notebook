@@ -25,13 +25,15 @@ class SubscriberPrincipalTests {
   }
 
   @Test
-  void principalIgnoresUnknownRoleNamesWhenDerivingPermissions() {
+  void principalDoesNotGrantAuthoritiesFromUnknownRoleOrRawPermissionNames() {
     SubscriberPrincipal principal =
         new SubscriberPrincipal(
-            "legacy@example.com", "", "legacy", false, java.util.List.of("ROLE_LEGACY"));
+            "legacy@example.com",
+            "",
+            "legacy",
+            false,
+            java.util.List.of("ROLE_LEGACY", "CONTENT_WRITE"));
 
-    assertThat(principal.getAuthorities())
-        .extracting(GrantedAuthority::getAuthority)
-        .containsExactly("ROLE_LEGACY");
+    assertThat(principal.getAuthorities()).extracting(GrantedAuthority::getAuthority).isEmpty();
   }
 }

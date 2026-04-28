@@ -42,6 +42,10 @@ public class SubscriberAdminService {
   }
 
   private SubscriberRole parseRole(String roleName) {
+    if (roleName == null || roleName.isBlank()) {
+      throw new IllegalArgumentException("Subscriber role must not be blank.");
+    }
+
     try {
       return SubscriberRole.valueOf(roleName);
     } catch (IllegalArgumentException exception) {
