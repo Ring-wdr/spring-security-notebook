@@ -107,6 +107,8 @@ class JwtProtectedApiTests {
         .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.email").value("user@example.com"))
+        .andExpect(jsonPath("$.nickname").value("user"))
+        .andExpect(jsonPath("$.social").value(false))
         .andExpect(jsonPath("$.roleNames[0]").value("ROLE_USER"));
   }
 

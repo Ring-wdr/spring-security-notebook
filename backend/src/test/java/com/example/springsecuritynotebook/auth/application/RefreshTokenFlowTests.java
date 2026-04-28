@@ -86,6 +86,8 @@ class RefreshTokenFlowTests {
             .andExpect(jsonPath("$.grantType").value("Bearer"))
             .andExpect(jsonPath("$.accessToken").isString())
             .andExpect(jsonPath("$.refreshToken").isString())
+            .andExpect(jsonPath("$.accessTokenExpiresIn").value(600))
+            .andExpect(jsonPath("$.refreshTokenExpiresIn").isNumber())
             .andReturn();
 
     TokenPairResponse response =
