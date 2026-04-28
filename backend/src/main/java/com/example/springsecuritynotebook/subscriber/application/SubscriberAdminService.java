@@ -1,6 +1,6 @@
 package com.example.springsecuritynotebook.subscriber.application;
 
-import com.example.springsecuritynotebook.auth.exception.ResourceNotFoundException;
+import com.example.springsecuritynotebook.shared.exception.ResourceNotFoundException;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import com.example.springsecuritynotebook.subscriber.persistence.SubscriberRepository;

@@ -1,7 +1,7 @@
 package com.example.springsecuritynotebook.auth.handler;
 
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
-import com.example.springsecuritynotebook.auth.exception.ResourceNotFoundException;
+import com.example.springsecuritynotebook.shared.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
