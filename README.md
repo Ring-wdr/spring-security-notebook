@@ -265,6 +265,26 @@ flowchart TD
 
 백엔드 헬스 엔드포인트는 `http://localhost:8080/actuator/health`입니다.
 
+### Backend Run Scripts
+
+백엔드 실행 시 `.env`를 매번 터미널에 수동 주입하지 않도록 루트 `scripts/` 아래에 OS별 실행 스크립트를 둡니다.
+
+- Windows PowerShell:
+  - `.\scripts\run-backend.ps1`
+  - dev profile: `.\scripts\run-backend.ps1 -Dev`
+  - infra skip: `.\scripts\run-backend.ps1 -SkipInfra`
+- Linux/macOS shell:
+  - `bash ./scripts/run-backend.sh`
+  - dev profile: `bash ./scripts/run-backend.sh --dev`
+  - infra skip: `bash ./scripts/run-backend.sh --skip-infra`
+
+두 스크립트는 공통적으로 아래 동작을 수행합니다.
+
+- 루트 `.env`를 읽어 `APP_JWT_SECRET` 등 실행 환경변수를 현재 프로세스에 주입
+- `APP_JWT_SECRET` 길이가 32자 미만이면 즉시 실패
+- 기본적으로 `docker compose up -d`로 PostgreSQL/Valkey를 먼저 보장
+- 이후 `backend` 디렉터리에서 Spring Boot를 실행
+
 ## Backend Runtime Notes
 
 - 백엔드는 이제 `APP_JWT_SECRET` 없이 기동하지 않도록 구성했습니다. 로컬 실행 전 루트 `.env` 또는 실행 환경에 JWT secret을 반드시 설정해야 합니다.

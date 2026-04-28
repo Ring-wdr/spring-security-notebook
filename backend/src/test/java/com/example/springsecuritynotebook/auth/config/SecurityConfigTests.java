@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,9 +72,56 @@ class SecurityConfigTests {
     mockMvc
         .perform(get("/v3/api-docs"))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("\"/api/auth/login\"")))
-        .andExpect(content().string(containsString("\"application/x-www-form-urlencoded\"")))
-        .andExpect(content().string(containsString("\"LoginRequest\"")));
+        .andExpect(
+            jsonPath("$.paths['/api/auth/login'].post.summary").value("Login and issue JWT tokens"))
+        .andExpect(
+            jsonPath(
+                    "$.paths['/api/auth/login'].post.requestBody.content['application/x-www-form-urlencoded'].schema.$ref")
+                .value("#/components/schemas/LoginRequest"))
+        .andExpect(
+            jsonPath(
+                    "$.paths['/api/auth/login'].post.responses['200'].content['application/json'].schema.$ref")
+                .value("#/components/schemas/TokenPairResponse"))
+        .andExpect(
+            jsonPath(
+                    "$.paths['/api/auth/login'].post.responses['401'].content['application/json'].schema.$ref")
+                .value("#/components/schemas/ErrorResponse"));
+  }
+
+  @Test
+  void openApiDocsExposeBearerSchemeAndProtectedOperationDescriptions() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.security[0].bearerAuth").isArray())
+        .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
+        .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+        .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
+        .andExpect(
+            jsonPath("$.paths['/api/auth/logout'].post.summary").value("Logout current user"))
+        .andExpect(
+            jsonPath(
+                    "$.paths['/api/auth/logout'].post.responses['403'].content['application/json'].schema.$ref")
+                .value("#/components/schemas/ErrorResponse"))
+        .andExpect(
+            jsonPath("$.paths['/api/content'].get.description")
+                .value(containsString("CONTENT_DRAFT_READ")))
+        .andExpect(
+            jsonPath("$.paths['/api/admin/users/{email}/role'].patch.description")
+                .value(containsString("USER_ROLE_UPDATE")));
+  }
+
+  @Test
+  void openApiDocsExposeRefreshBadRequestContract() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$.paths['/api/auth/refresh'].post.summary").value("Refresh access token"))
+        .andExpect(
+            jsonPath(
+                    "$.paths['/api/auth/refresh'].post.responses['400'].content['application/json'].schema.$ref")
+                .value("#/components/schemas/ErrorResponse"));
   }
 
   @Test

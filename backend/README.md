@@ -28,6 +28,8 @@ backend/
 
 - 인프라 실행: `docker compose up -d`
 - 테스트: `.\mvnw.cmd test`
+- 백엔드 실행(Windows): `..\scripts\run-backend.ps1`
+- 백엔드 실행(Linux/macOS): `bash ../scripts/run-backend.sh`
 
 ## Runtime Defaults
 
