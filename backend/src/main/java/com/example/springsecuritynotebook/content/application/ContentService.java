@@ -1,9 +1,9 @@
 package com.example.springsecuritynotebook.content.application;
 
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
-import com.example.springsecuritynotebook.auth.exception.ResourceNotFoundException;
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.persistence.ContentRepository;
+import com.example.springsecuritynotebook.shared.exception.ResourceNotFoundException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

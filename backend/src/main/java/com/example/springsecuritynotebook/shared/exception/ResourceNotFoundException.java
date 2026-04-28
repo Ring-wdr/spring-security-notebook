@@ -1,4 +1,4 @@
-package com.example.springsecuritynotebook.auth.exception;
+package com.example.springsecuritynotebook.shared.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
 
