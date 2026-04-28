@@ -7,14 +7,11 @@ import {
 } from "@/components/dossier";
 import {
   LECTURE_AUDIT_ITEMS,
+  describeProtectedRouteAccess,
   type LearningSnapshot,
 } from "@/lib/learn";
 
-type LearnRouteOutcome = {
-  status: 401 | 403;
-  code: string;
-  summary: string;
-};
+type LearnRouteOutcome = ReturnType<typeof describeProtectedRouteAccess>;
 
 type LearnWorkspaceViewProps = {
   snapshot: LearningSnapshot;
