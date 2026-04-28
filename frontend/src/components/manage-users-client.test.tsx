@@ -29,10 +29,14 @@ describe("ManageUsersClient", () => {
       screen.getByRole("heading", { name: "User role assignments" }),
     ).toBeInTheDocument();
 
-    const identityRows = container.querySelectorAll(".user-role-row");
-    expect(identityRows.length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".user-role-row").length).toBeGreaterThan(0);
 
-    const firstRow = identityRows.item(0);
+    const firstRow = container.querySelector<HTMLElement>(".user-role-row");
+    expect(firstRow).not.toBeNull();
+    if (!firstRow) {
+      throw new Error("Expected at least one user role row.");
+    }
+
     expect(within(firstRow).getByText("user")).toBeVisible();
     expect(within(firstRow).getByText("user@example.com")).toBeVisible();
   });
