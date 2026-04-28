@@ -23,7 +23,7 @@ export function DossierSurface({
             {title}
           </h1>
           {intro ? (
-            <p className="max-w-3xl text-sm leading-7 text-[color:var(--muted-foreground)]">
+            <p className="max-w-3xl text-sm leading-7 text-[color:var(--dossier-muted-foreground)]">
               {intro}
             </p>
           ) : null}
@@ -91,7 +91,7 @@ export function ActionTile({
       </span>
       <span
         id={bodyId}
-        className="text-sm leading-6 text-[color:var(--muted-foreground)]"
+        className="text-sm leading-6 text-[color:var(--dossier-muted-foreground)]"
       >
         {body}
       </span>
@@ -108,10 +108,12 @@ export function DataTile({
 }) {
   return (
     <div className="data-tile">
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted-foreground)]">
+      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--dossier-muted-foreground)]">
         {label}
       </span>
-      <span className="text-sm font-medium text-[color:var(--foreground)]">{value}</span>
+      <span className="text-sm font-medium text-[color:var(--dossier-foreground)]">
+        {value}
+      </span>
     </div>
   );
 }

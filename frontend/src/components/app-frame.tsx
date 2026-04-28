@@ -9,7 +9,7 @@ import type { StoredSession } from "@/lib/types";
 
 export function AppFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(127,192,221,0.18),_transparent_24%),radial-gradient(circle_at_top_left,_rgba(39,95,122,0.12),_transparent_30%),linear-gradient(180deg,_var(--page-top),_var(--page-bottom))] text-[color:var(--foreground)]">
+    <div className="dossier-shell min-h-screen bg-[radial-gradient(circle_at_top_right,_var(--dossier-shell-glow-strong),_transparent_24%),radial-gradient(circle_at_top_left,_var(--dossier-shell-glow-soft),_transparent_30%),linear-gradient(180deg,_var(--page-top),_var(--page-bottom))] text-[color:var(--foreground)]">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--surface-strong)]/88 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-5 py-4">
           <div className="space-y-1">
@@ -17,7 +17,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               Spring Security Notebook
             </Link>
             <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--muted-foreground)]">
-              Security Learning Dossier
+              Subscriber Content Hub
             </p>
           </div>
           <Suspense fallback={<Navigation session={null} />}>

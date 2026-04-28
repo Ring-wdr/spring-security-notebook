@@ -1,19 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ecf1f5;
-  --foreground: #15202b;
-  --page-top: #f4f7fa;
-  --page-bottom: #dde6ee;
-  --surface: rgba(251, 253, 255, 0.82);
-  --surface-strong: #f8fbfd;
-  --border: rgba(27, 45, 63, 0.11);
-  --border-strong: rgba(27, 45, 63, 0.2);
-  --muted-foreground: #5d6d7d;
-  --accent: #275f7a;
-  --accent-foreground: #f3f7fa;
-  --warn: #56708a;
-  --shadow-soft: 0 18px 45px rgba(28, 47, 66, 0.1);
+  --background: #f6f0e4;
+  --foreground: #1b211f;
+  --page-top: #f7f2e8;
+  --page-bottom: #efe4cf;
+  --surface: rgba(255, 252, 247, 0.88);
+  --surface-strong: #fff9ef;
+  --border: rgba(48, 62, 57, 0.12);
+  --border-strong: rgba(48, 62, 57, 0.24);
+  --muted-foreground: #65706c;
+  --accent: #1f6d63;
+  --accent-foreground: #f4f6f4;
+  --warn: #c56c34;
+  --shadow-soft: 0 18px 45px rgba(76, 61, 36, 0.12);
+  --dossier-foreground: #15202b;
+  --dossier-page-top: #f4f7fa;
+  --dossier-page-bottom: #dde6ee;
+  --dossier-surface: rgba(251, 253, 255, 0.82);
+  --dossier-surface-strong: #f8fbfd;
+  --dossier-border: rgba(27, 45, 63, 0.11);
+  --dossier-border-strong: rgba(27, 45, 63, 0.2);
+  --dossier-muted-foreground: #5d6d7d;
+  --dossier-accent: #275f7a;
+  --dossier-accent-foreground: #f3f7fa;
+  --dossier-eyebrow: #56708a;
+  --dossier-shadow-soft: 0 18px 45px rgba(28, 47, 66, 0.1);
+  --dossier-shell-glow-strong: rgba(127, 192, 221, 0.18);
+  --dossier-shell-glow-soft: rgba(39, 95, 122, 0.12);
 }
 
 @theme inline {
@@ -25,19 +39,33 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1722;
-    --foreground: #e7eef5;
-    --page-top: #121b27;
-    --page-bottom: #182433;
-    --surface: rgba(18, 28, 40, 0.84);
-    --surface-strong: #172230;
-    --border: rgba(212, 225, 238, 0.1);
-    --border-strong: rgba(212, 225, 238, 0.18);
-    --muted-foreground: #96a8bb;
-    --accent: #7fc0dd;
-    --accent-foreground: #10202b;
-    --warn: #8fa8bb;
-    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.3);
+    --background: #101714;
+    --foreground: #edf1ed;
+    --page-top: #111916;
+    --page-bottom: #15201c;
+    --surface: rgba(20, 29, 26, 0.88);
+    --surface-strong: #18221e;
+    --border: rgba(205, 221, 214, 0.12);
+    --border-strong: rgba(205, 221, 214, 0.22);
+    --muted-foreground: #a0b4ac;
+    --accent: #73cfb2;
+    --accent-foreground: #10231f;
+    --warn: #f3a15f;
+    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.34);
+    --dossier-foreground: #e7eef5;
+    --dossier-page-top: #121b27;
+    --dossier-page-bottom: #182433;
+    --dossier-surface: rgba(18, 28, 40, 0.84);
+    --dossier-surface-strong: #172230;
+    --dossier-border: rgba(212, 225, 238, 0.1);
+    --dossier-border-strong: rgba(212, 225, 238, 0.18);
+    --dossier-muted-foreground: #96a8bb;
+    --dossier-accent: #7fc0dd;
+    --dossier-accent-foreground: #10202b;
+    --dossier-eyebrow: #8fa8bb;
+    --dossier-shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.3);
+    --dossier-shell-glow-strong: rgba(127, 192, 221, 0.18);
+    --dossier-shell-glow-soft: rgba(39, 95, 122, 0.12);
   }
 }
 
@@ -131,20 +159,40 @@ a {
   color: var(--accent);
 }
 
+.dossier-shell {
+  --foreground: var(--dossier-foreground);
+  --page-top: var(--dossier-page-top);
+  --page-bottom: var(--dossier-page-bottom);
+  --surface: var(--dossier-surface);
+  --surface-strong: var(--dossier-surface-strong);
+  --border: var(--dossier-border);
+  --border-strong: var(--dossier-border-strong);
+  --muted-foreground: var(--dossier-muted-foreground);
+  --accent: var(--dossier-accent);
+  --accent-foreground: var(--dossier-accent-foreground);
+  --warn: var(--dossier-eyebrow);
+  --shadow-soft: var(--dossier-shadow-soft);
+}
+
 .dossier-surface {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dossier-border);
   border-radius: 32px;
+  color: var(--dossier-foreground);
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--surface-strong) 88%, white 12%),
-      var(--surface)
+      color-mix(in srgb, var(--dossier-surface-strong) 88%, white 12%),
+      var(--dossier-surface)
     );
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--dossier-shadow-soft);
   padding: 1.75rem;
+}
+
+.dossier-surface .eyebrow {
+  color: var(--dossier-eyebrow);
 }
 
 .dossier-stack {
@@ -153,23 +201,23 @@ a {
 }
 
 .dossier-section {
-  border: 1px solid var(--border);
+  border: 1px solid var(--dossier-border);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+  background: color-mix(in srgb, var(--dossier-surface-strong) 82%, transparent);
   padding: 1.25rem;
 }
 
 .dossier-rail {
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: color-mix(in srgb, var(--dossier-surface) 92%, transparent);
 }
 
 .action-tile {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dossier-border);
   border-radius: 20px;
-  background: color-mix(in srgb, var(--surface-strong) 94%, white 6%);
+  background: color-mix(in srgb, var(--dossier-surface-strong) 94%, white 6%);
   padding: 1rem 1.1rem;
   transition:
     border-color 160ms ease,
@@ -178,7 +226,7 @@ a {
 }
 
 .action-tile:hover {
-  border-color: var(--border-strong);
+  border-color: var(--dossier-border-strong);
   box-shadow: 0 14px 30px rgba(28, 47, 66, 0.09);
   transform: translateY(-1px);
 }
@@ -190,6 +238,6 @@ a {
 }
 
 .data-tile + .data-tile {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--dossier-border);
   padding-top: 0.85rem;
 }
