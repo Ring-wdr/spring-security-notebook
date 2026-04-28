@@ -3,7 +3,6 @@ package com.example.springsecuritynotebook.auth.application;
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
 import com.example.springsecuritynotebook.subscriber.application.SubscriberUserLookup;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,14 +13,6 @@ public class AuthService {
   private final AccessTokenBlocklist accessTokenBlocklist;
   private final SubscriberUserLookup subscriberUserLookup;
 
-  AuthService(
-      JwtService jwtService,
-      RefreshTokenStore refreshTokenStore,
-      AccessTokenBlocklist accessTokenBlocklist) {
-    this(jwtService, refreshTokenStore, accessTokenBlocklist, email -> java.util.Optional.empty());
-  }
-
-  @Autowired
   public AuthService(
       JwtService jwtService,
       RefreshTokenStore refreshTokenStore,
