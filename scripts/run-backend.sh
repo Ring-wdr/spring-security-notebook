@@ -44,10 +44,41 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
-set -a
-# shellcheck disable=SC1090
-source "${ENV_FILE}"
-set +a
+trim() {
+  printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+import_env_file() {
+  local path="$1"
+  local line trimmed name value first_char last_char
+
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    trimmed="$(trim "${line}")"
+
+    if [[ -z "${trimmed}" || "${trimmed}" == \#* ]]; then
+      continue
+    fi
+
+    if [[ "${trimmed}" != *"="* ]]; then
+      continue
+    fi
+
+    name="$(trim "${trimmed%%=*}")"
+    value="$(trim "${trimmed#*=}")"
+
+    if [[ ${#value} -ge 2 ]]; then
+      first_char="${value:0:1}"
+      last_char="${value: -1}"
+      if [[ ("${first_char}" == '"' && "${last_char}" == '"') || ("${first_char}" == "'" && "${last_char}" == "'") ]]; then
+        value="${value:1:${#value}-2}"
+      fi
+    fi
+
+    export "${name}=${value}"
+  done < "${path}"
+}
+
+import_env_file "${ENV_FILE}"
 
 if [[ -z "${APP_JWT_SECRET:-}" ]]; then
   echo "APP_JWT_SECRET is missing. Set it in ${ENV_FILE}." >&2
@@ -76,7 +107,7 @@ fi
 
 if [[ ${SKIP_INFRA} -eq 0 ]]; then
   echo "Starting local infrastructure with docker compose..."
-  docker compose up -d
+  docker compose --project-directory "${REPO_ROOT}" -f "${REPO_ROOT}/compose.yaml" up -d --wait
 fi
 
 cd "${BACKEND_DIR}"

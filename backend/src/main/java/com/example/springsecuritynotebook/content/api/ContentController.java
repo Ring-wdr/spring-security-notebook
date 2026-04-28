@@ -53,16 +53,23 @@ public class ContentController {
         description = "Content list returned successfully.",
         content =
             @Content(
+                mediaType = "application/json",
                 array =
                     @ArraySchema(schema = @Schema(implementation = ContentSummaryResponse.class)))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the CONTENT_READ authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public List<ContentSummaryResponse> getContents(
       @AuthenticationPrincipal SubscriberPrincipal principal,
@@ -86,19 +93,31 @@ public class ContentController {
     @ApiResponse(
         responseCode = "200",
         description = "Content detail returned successfully.",
-        content = @Content(schema = @Schema(implementation = ContentDetailResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ContentDetailResponse.class))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the CONTENT_READ authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "404",
         description = "Requested content was not found or is not visible to the caller.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ContentDetailResponse getContent(
       @AuthenticationPrincipal SubscriberPrincipal principal,
@@ -121,19 +140,31 @@ public class ContentController {
     @ApiResponse(
         responseCode = "200",
         description = "Content created successfully.",
-        content = @Content(schema = @Schema(implementation = ContentDetailResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ContentDetailResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = "Request payload validation failed.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the CONTENT_WRITE authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ContentDetailResponse createContent(@Valid @RequestBody ContentUpsertRequest request) {
     return contentService.createContent(request);
@@ -148,23 +179,38 @@ public class ContentController {
     @ApiResponse(
         responseCode = "200",
         description = "Content updated successfully.",
-        content = @Content(schema = @Schema(implementation = ContentDetailResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ContentDetailResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = "Request payload validation failed.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the CONTENT_WRITE authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "404",
         description = "Requested content was not found.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ContentDetailResponse updateContent(
       @PathVariable Long contentId, @Valid @RequestBody ContentUpsertRequest request) {

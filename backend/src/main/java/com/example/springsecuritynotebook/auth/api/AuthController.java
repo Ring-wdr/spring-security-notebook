@@ -44,11 +44,24 @@ public class AuthController {
     @ApiResponse(
         responseCode = "200",
         description = "Tokens were refreshed successfully.",
-        content = @Content(schema = @Schema(implementation = TokenPairResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = TokenPairResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "Authorization header or refresh request payload was invalid.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "401",
         description = "Access token or refresh token was invalid or expired.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public TokenPairResponse refresh(
       @Parameter(hidden = true) @RequestHeader(HttpHeaders.AUTHORIZATION)
@@ -71,11 +84,17 @@ public class AuthController {
     @ApiResponse(
         responseCode = "401",
         description = "Authentication token was missing, malformed, or expired.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the AUTH_LOGOUT authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal SubscriberPrincipal principal,

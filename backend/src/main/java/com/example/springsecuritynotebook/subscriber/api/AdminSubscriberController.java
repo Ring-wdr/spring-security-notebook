@@ -45,17 +45,24 @@ public class AdminSubscriberController {
         description = "Subscriber list returned successfully.",
         content =
             @Content(
+                mediaType = "application/json",
                 array =
                     @ArraySchema(
                         schema = @Schema(implementation = SubscriberSummaryResponse.class)))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the USER_READ authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public List<SubscriberSummaryResponse> getSubscribers() {
     return subscriberAdminService.getSubscribers();
@@ -71,23 +78,38 @@ public class AdminSubscriberController {
     @ApiResponse(
         responseCode = "200",
         description = "Roles updated successfully.",
-        content = @Content(schema = @Schema(implementation = SubscriberSummaryResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = SubscriberSummaryResponse.class))),
     @ApiResponse(
         responseCode = "400",
         description = "Request payload validation failed.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "401",
         description = "Authentication is required.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "403",
         description = "Authenticated user does not have the USER_ROLE_UPDATE authority.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class))),
     @ApiResponse(
         responseCode = "404",
         description = "Subscriber was not found.",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
   })
   public SubscriberSummaryResponse updateRoles(
       @PathVariable String email, @Valid @RequestBody UpdateSubscriberRolesRequest request) {

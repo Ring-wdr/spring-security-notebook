@@ -25,7 +25,6 @@ public class OpenApiConfig {
 
   private static final String BEARER_AUTH = "bearerAuth";
   private static final String LOGIN_REQUEST = "LoginRequest";
-  private static final String ERROR_RESPONSE = "ErrorResponse";
 
   @Bean
   OpenAPI openApi() {
@@ -43,7 +42,6 @@ public class OpenApiConfig {
         .components(
             new Components()
                 .addSchemas(LOGIN_REQUEST, loginRequestSchema())
-                .addSchemas(ERROR_RESPONSE, errorResponseSchema())
                 .addSecuritySchemes(
                     BEARER_AUTH,
                     new SecurityScheme()
@@ -95,7 +93,7 @@ public class OpenApiConfig {
                                         .addMediaType(
                                             "application/json",
                                             new io.swagger.v3.oas.models.media.MediaType()
-                                                .schema(ref(ERROR_RESPONSE)))))));
+                                                .schema(ref("ErrorResponse")))))));
   }
 
   private Schema<Object> loginRequestSchema() {
@@ -114,15 +112,6 @@ public class OpenApiConfig {
                 .description("Plain-text password for login testing.")
                 .example("1111"))
         .required(List.of("email", "password"));
-  }
-
-  private Schema<Object> errorResponseSchema() {
-    return new ObjectSchema()
-        .description(
-            "Standard JSON error payload returned by authentication and authorization handlers.")
-        .addProperty("error", new StringSchema().example("ERROR_ACCESS_DENIED"))
-        .addProperty("message", new StringSchema().example("You do not have permission."))
-        .required(List.of("error", "message"));
   }
 
   private Schema<Object> ref(String schemaName) {

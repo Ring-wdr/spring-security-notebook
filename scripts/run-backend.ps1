@@ -77,7 +77,8 @@ if ($DryRun) {
 
 if (-not $SkipInfra) {
     Write-Host "Starting local infrastructure with docker compose..."
-    & docker compose up -d
+    $composeFile = Join-Path $repoRoot "compose.yaml"
+    & docker compose --project-directory $repoRoot -f $composeFile up -d --wait
 }
 
 Push-Location $backendDir
