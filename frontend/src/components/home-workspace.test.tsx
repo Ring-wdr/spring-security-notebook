@@ -81,12 +81,17 @@ describe("HomeWorkspace", () => {
     expect(currentSession).not.toBeNull();
 
     const currentSessionScope = within(currentSession!);
-    expect(currentSessionScope.getByText("authenticated")).toBeInTheDocument();
-    expect(currentSessionScope.getByText("manager")).toBeInTheDocument();
-    expect(
-      currentSessionScope.getAllByText("manager@example.com")[0],
-    ).toBeInTheDocument();
-    expect(currentSessionScope.getAllByText("ROLE_MANAGER").length).toBeGreaterThan(0);
-    expect(currentSessionScope.getAllByText("ROLE_ADMIN").length).toBeGreaterThan(0);
+    const statusCard = currentSessionScope.getByTestId("session-metric-status");
+    const profileCard = currentSessionScope.getByTestId("session-metric-profile");
+    const emailCard = currentSessionScope.getByTestId("session-metric-email");
+    const authoritiesCard = currentSessionScope.getByTestId(
+      "session-metric-authorities",
+    );
+
+    expect(within(statusCard).getByText("authenticated")).toBeInTheDocument();
+    expect(within(profileCard).getByText("manager")).toBeInTheDocument();
+    expect(within(emailCard).getByText("manager@example.com")).toBeInTheDocument();
+    expect(within(authoritiesCard).getByText("ROLE_MANAGER")).toBeInTheDocument();
+    expect(within(authoritiesCard).getByText("ROLE_ADMIN")).toBeInTheDocument();
   });
 });

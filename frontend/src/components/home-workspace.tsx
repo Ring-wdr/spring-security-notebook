@@ -188,8 +188,13 @@ function SessionMetricCard({
   label: string;
   value: ReactNode;
 }) {
+  const testId = `session-metric-${label.toLowerCase().replace(/\s+/g, "-")}`;
+
   return (
-    <div className="rounded-[20px] border border-[color:var(--dossier-border)] bg-[color:var(--dossier-surface-strong)] px-4 py-4">
+    <div
+      data-testid={testId}
+      className="rounded-[20px] border border-[color:var(--dossier-border)] bg-[color:var(--dossier-surface-strong)] px-4 py-4"
+    >
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--dossier-muted-foreground)]">
         {label}
       </p>
