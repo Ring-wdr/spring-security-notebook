@@ -73,7 +73,21 @@ class SecurityConfigTests {
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("\"/api/auth/login\"")))
         .andExpect(content().string(containsString("\"application/x-www-form-urlencoded\"")))
-        .andExpect(content().string(containsString("\"LoginRequest\"")));
+        .andExpect(content().string(containsString("\"LoginRequest\"")))
+        .andExpect(content().string(containsString("\"Login and issue JWT tokens\"")));
+  }
+
+  @Test
+  void openApiDocsExposeBearerSchemeAndProtectedOperationDescriptions() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("\"bearerAuth\"")))
+        .andExpect(content().string(containsString("\"scheme\":\"bearer\"")))
+        .andExpect(content().string(containsString("\"Logout current user\"")))
+        .andExpect(content().string(containsString("AUTH_LOGOUT")))
+        .andExpect(content().string(containsString("CONTENT_DRAFT_READ")))
+        .andExpect(content().string(containsString("USER_ROLE_UPDATE")));
   }
 
   @Test
