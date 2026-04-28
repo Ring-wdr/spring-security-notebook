@@ -170,7 +170,6 @@ a {
   --muted-foreground: var(--dossier-muted-foreground);
   --accent: var(--dossier-accent);
   --accent-foreground: var(--dossier-accent-foreground);
-  --warn: var(--dossier-eyebrow);
   --shadow-soft: var(--dossier-shadow-soft);
 }
 

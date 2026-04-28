@@ -3,7 +3,7 @@
 import { DossierRail, DossierSection, DossierSurface } from "@/components/dossier";
 import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
 import type { ContentSummary } from "@/lib/types";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 
 type EditorState = {
   id: number | null;
@@ -26,6 +26,7 @@ export function ManageContentClient({
 }: {
   initialItems: ContentSummary[];
 }) {
+  const editorFieldPrefix = useId();
   const [items, setItems] = useState(initialItems);
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
   const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
@@ -120,39 +121,63 @@ export function ManageContentClient({
               className="space-y-4"
               onSubmit={(event) => void handleSubmit(event)}
             >
-              <input
-                className="field"
-                placeholder="Title"
-                value={editor.title}
-                onChange={(event) =>
-                  setEditor((current) => ({
-                    ...current,
-                    title: event.target.value,
-                  }))
-                }
-              />
-              <input
-                className="field"
-                placeholder="Category"
-                value={editor.category}
-                onChange={(event) =>
-                  setEditor((current) => ({
-                    ...current,
-                    category: event.target.value,
-                  }))
-                }
-              />
-              <textarea
-                className="field min-h-48"
-                placeholder="Body"
-                value={editor.body}
-                onChange={(event) =>
-                  setEditor((current) => ({
-                    ...current,
-                    body: event.target.value,
-                  }))
-                }
-              />
+              <div className="space-y-2">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${editorFieldPrefix}-title`}
+                >
+                  Title
+                </label>
+                <input
+                  id={`${editorFieldPrefix}-title`}
+                  className="field"
+                  value={editor.title}
+                  onChange={(event) =>
+                    setEditor((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${editorFieldPrefix}-category`}
+                >
+                  Category
+                </label>
+                <input
+                  id={`${editorFieldPrefix}-category`}
+                  className="field"
+                  value={editor.category}
+                  onChange={(event) =>
+                    setEditor((current) => ({
+                      ...current,
+                      category: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  className="text-sm font-medium"
+                  htmlFor={`${editorFieldPrefix}-body`}
+                >
+                  Body
+                </label>
+                <textarea
+                  id={`${editorFieldPrefix}-body`}
+                  className="field min-h-48"
+                  value={editor.body}
+                  onChange={(event) =>
+                    setEditor((current) => ({
+                      ...current,
+                      body: event.target.value,
+                    }))
+                  }
+                />
+              </div>
               <label className="flex items-center gap-3 text-sm font-medium">
                 <input
                   type="checkbox"

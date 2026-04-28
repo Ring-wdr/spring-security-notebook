@@ -123,13 +123,13 @@ describe("ManageContentClient", () => {
 
     render(<ManageContentClient initialItems={contents} />);
 
-    await user.clear(screen.getByPlaceholderText("Title"));
-    await user.type(screen.getByPlaceholderText("Title"), "Refresh Rotation");
-    await user.clear(screen.getByPlaceholderText("Category"));
-    await user.type(screen.getByPlaceholderText("Category"), "tokens");
-    await user.clear(screen.getByPlaceholderText("Body"));
+    await user.clear(screen.getByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "Refresh Rotation");
+    await user.clear(screen.getByLabelText("Category"));
+    await user.type(screen.getByLabelText("Category"), "tokens");
+    await user.clear(screen.getByLabelText("Body"));
     await user.type(
-      screen.getByPlaceholderText("Body"),
+      screen.getByLabelText("Body"),
       "Rotate the refresh token before it is too close to expiry.",
     );
     await user.click(screen.getByRole("button", { name: "Create content" }));
@@ -193,10 +193,10 @@ describe("ManageContentClient", () => {
     render(<ManageContentClient initialItems={contents} />);
 
     await user.click(screen.getByRole("button", { name: /jwt basics/i }));
-    await user.clear(await screen.findByPlaceholderText("Title"));
-    await user.type(screen.getByPlaceholderText("Title"), "JWT Refresh");
-    await user.clear(screen.getByPlaceholderText("Body"));
-    await user.type(screen.getByPlaceholderText("Body"), "Updated body");
+    await user.clear(await screen.findByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "JWT Refresh");
+    await user.clear(screen.getByLabelText("Body"));
+    await user.type(screen.getByLabelText("Body"), "Updated body");
     await user.click(screen.getByRole("button", { name: "Update content" }));
 
     expect(await screen.findByText("Content updated.")).toBeInTheDocument();
@@ -225,8 +225,8 @@ describe("ManageContentClient", () => {
 
     render(<ManageContentClient initialItems={[]} />);
 
-    await user.type(screen.getByPlaceholderText("Title"), "Broken content");
-    await user.type(screen.getByPlaceholderText("Body"), "Missing fields");
+    await user.type(screen.getByLabelText("Title"), "Broken content");
+    await user.type(screen.getByLabelText("Body"), "Missing fields");
     await user.click(screen.getByRole("button", { name: "Create content" }));
 
     expect(await screen.findByText("ERROR_BAD_REQUEST")).toBeInTheDocument();
@@ -266,9 +266,9 @@ describe("ManageContentClient", () => {
 
     await user.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(screen.getByPlaceholderText("Title")).toHaveValue("");
-    expect(screen.getByPlaceholderText("Category")).toHaveValue("security");
-    expect(screen.getByPlaceholderText("Body")).toHaveValue("");
+    expect(screen.getByLabelText("Title")).toHaveValue("");
+    expect(screen.getByLabelText("Category")).toHaveValue("security");
+    expect(screen.getByLabelText("Body")).toHaveValue("");
     expect(screen.getByRole("checkbox")).toBeChecked();
     expect(screen.getByRole("button", { name: "Create content" })).toBeInTheDocument();
   });
