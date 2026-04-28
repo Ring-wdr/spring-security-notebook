@@ -1,4 +1,4 @@
-import type { AuthenticatedSession } from "./server/session";
+import type { AuthenticatedSession } from "./types";
 
 export type LectureAuditStatus =
   | "already_covered"

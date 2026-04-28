@@ -5,7 +5,7 @@ import {
   createLearningSnapshot,
   describeProtectedRouteAccess,
 } from "./learn";
-import type { AuthenticatedSession } from "./server/session";
+import type { AuthenticatedSession } from "./types";
 
 const AUTHENTICATED_SESSION: AuthenticatedSession = {
   tokens: {
