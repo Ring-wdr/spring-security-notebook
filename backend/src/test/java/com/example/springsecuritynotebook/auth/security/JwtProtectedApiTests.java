@@ -157,7 +157,8 @@ class JwtProtectedApiTests {
                 .queryParam("includeAll", "true")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].published").exists());
+        .andExpect(
+            jsonPath("$[?(@.title == 'Draft Content' && @.published == false)]").isNotEmpty());
   }
 
   @Test
