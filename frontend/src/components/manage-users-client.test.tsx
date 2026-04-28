@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
@@ -22,7 +22,19 @@ describe("ManageUsersClient", () => {
     );
 
     expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
-    expect(container.querySelectorAll(".user-role-row").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", { name: "Manage subscriber roles" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "User role assignments" }),
+    ).toBeInTheDocument();
+
+    const identityRows = container.querySelectorAll(".user-role-row");
+    expect(identityRows.length).toBeGreaterThan(0);
+
+    const firstRow = identityRows.item(0);
+    expect(within(firstRow).getByText("user")).toBeVisible();
+    expect(within(firstRow).getByText("user@example.com")).toBeVisible();
   });
 
   it("keeps the final assigned role checked when removal is rejected locally", async () => {
