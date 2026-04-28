@@ -90,6 +90,7 @@ spring-security-notebook/
 
 - 핵심 요약 가이드: [spring-security-architecture-jwt-study-guide.md](docs/spring-security-architecture-jwt-study-guide.md)
 - 강의 구현 audit: [spring-security-lecture-gap-audit.md](docs/spring-security-lecture-gap-audit.md)
+- 백엔드 step-by-step 분석: [spring-security-backend-lecture-step-analysis.md](docs/spring-security-backend-lecture-step-analysis.md)
 - 구현 설계 문서: [2026-04-27-spring-security-lecture-gap-audit-design.md](docs/superpowers/specs/2026-04-27-spring-security-lecture-gap-audit-design.md)
 - 단계별 실습 문서:
   - [01-concepts-and-architecture.md](docs/spring-security-notebooklm-docs/01-concepts-and-architecture.md)
