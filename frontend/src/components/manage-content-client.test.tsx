@@ -7,6 +7,29 @@ import { ManageContentClient } from "./manage-content-client";
 import { server } from "@/test/msw/server";
 
 describe("ManageContentClient", () => {
+  it("renders one dossier workspace with an editor section and content registry", () => {
+    const { container } = render(
+      <ManageContentClient
+        initialItems={[
+          {
+            id: 1,
+            title: "JWT Basics",
+            category: "security",
+            published: true,
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "Create or update content" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Content registry" }),
+    ).toBeInTheDocument();
+  });
+
   it("loads selected content details into the editor", async () => {
     server.use(
       http.get("http://localhost:3000/api/content/:id", ({ params }) => {

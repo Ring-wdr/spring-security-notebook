@@ -7,6 +7,24 @@ import { ManageUsersClient } from "./manage-users-client";
 import { server } from "@/test/msw/server";
 
 describe("ManageUsersClient", () => {
+  it("renders one dossier workspace with user role rows", () => {
+    const { container } = render(
+      <ManageUsersClient
+        initialUsers={[
+          {
+            email: "user@example.com",
+            nickname: "user",
+            social: false,
+            roleNames: ["ROLE_USER"],
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
+    expect(container.querySelectorAll(".user-role-row").length).toBeGreaterThan(0);
+  });
+
   it("keeps the final assigned role checked when removal is rejected locally", async () => {
     const user = userEvent.setup();
 
