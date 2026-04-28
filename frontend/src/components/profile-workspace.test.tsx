@@ -1,12 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ProfileWorkspace } from "./profile-workspace";
-import type { StoredSession } from "@/lib/types";
+import type { AuthenticatedSession } from "@/lib/types";
 
 describe("ProfileWorkspace", () => {
-  it("renders the authenticated user profile and token timing in one dossier surface", () => {
-    const session: StoredSession = {
+  it("renders the authenticated identity, authorities, and token timing in one dossier surface", () => {
+    const session: AuthenticatedSession = {
       tokens: {
         grantType: "Bearer",
         accessToken: "access-token",
@@ -31,5 +31,23 @@ describe("ProfileWorkspace", () => {
     expect(
       screen.getByRole("heading", { name: "Token timing" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Nickname")).toBeInTheDocument();
+    expect(screen.getByText("user")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
+    expect(screen.getByText("user@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Grant type")).toBeInTheDocument();
+    expect(screen.getByText("Bearer")).toBeInTheDocument();
+    expect(screen.getByText("ROLE_USER")).toBeInTheDocument();
+    expect(screen.getByText("Access token TTL (sec)")).toBeInTheDocument();
+    expect(screen.getByText("600")).toBeInTheDocument();
+    expect(screen.getByText("Refresh token TTL (sec)")).toBeInTheDocument();
+    expect(screen.getByText("86400")).toBeInTheDocument();
+
+    const authoritiesRail = screen
+      .getByRole("heading", { name: "Authorities" })
+      .closest("section");
+
+    expect(authoritiesRail).not.toBeNull();
+    expect(within(authoritiesRail!).getByText("ROLE_USER")).toBeInTheDocument();
   });
 });

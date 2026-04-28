@@ -22,7 +22,7 @@ vi.mock("next/link", () => ({
 }));
 
 describe("ContentFeedView", () => {
-  it("renders protected content as dossier rows with a link for each item", () => {
+  it("renders protected content rows with category and publication metadata", () => {
     const items: ContentSummary[] = [
       {
         id: 7,
@@ -30,14 +30,29 @@ describe("ContentFeedView", () => {
         category: "Security",
         published: true,
       },
+      {
+        id: 8,
+        title: "Role boundaries",
+        category: "Authorization",
+        published: false,
+      },
     ];
 
     const { container } = render(<ContentFeedView items={items} />);
 
     expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
-    expect(container.querySelectorAll(".content-row")).toHaveLength(1);
+    expect(container.querySelectorAll(".content-row")).toHaveLength(2);
+    expect(screen.getByText("Security")).toBeInTheDocument();
+    expect(screen.getByText("Authorization")).toBeInTheDocument();
+    expect(screen.getByText("Published")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "JWT fundamentals" })).toHaveAttribute(
+      "href",
+      "/content/7",
+    );
     expect(
-      screen.getByRole("link", { name: /JWT fundamentals/i }),
-    ).toHaveAttribute("href", "/content/7");
+      screen.getByRole("link", { name: "Role boundaries" }),
+    ).toHaveAttribute("href", "/content/8");
+    expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 });

@@ -15,6 +15,10 @@ export type StoredSession = {
   user: CurrentUser | null;
 };
 
+export type AuthenticatedSession = StoredSession & {
+  user: CurrentUser;
+};
+
 export type ContentSummary = ContentSummaryResponse;
 
 export type ContentDetail = ContentDetailResponse;

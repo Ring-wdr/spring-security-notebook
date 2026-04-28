@@ -4,10 +4,10 @@ import {
   DossierSection,
   DossierSurface,
 } from "@/components/dossier";
-import type { StoredSession } from "@/lib/types";
+import type { AuthenticatedSession } from "@/lib/types";
 
 type ProfileWorkspaceProps = {
-  session: StoredSession;
+  session: AuthenticatedSession;
 };
 
 export function ProfileWorkspace({ session }: ProfileWorkspaceProps) {
@@ -25,11 +25,11 @@ export function ProfileWorkspace({ session }: ProfileWorkspaceProps) {
               snapshot returned from the protected <code>/me</code> flow.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <DataTile label="Nickname" value={session.user?.nickname ?? "-"} />
-              <DataTile label="Email" value={session.user?.email ?? "-"} />
+              <DataTile label="Nickname" value={session.user.nickname} />
+              <DataTile label="Email" value={session.user.email} />
               <DataTile
                 label="Social login"
-                value={session.user?.social ? "true" : "false"}
+                value={session.user.social ? "true" : "false"}
               />
               <DataTile label="Grant type" value={session.tokens.grantType} />
             </div>
@@ -43,7 +43,7 @@ export function ProfileWorkspace({ session }: ProfileWorkspaceProps) {
               and determine which protected routes stay available.
             </p>
             <div className="flex flex-wrap gap-2">
-              {session.user?.roleNames.map((role) => (
+              {session.user.roleNames.map((role) => (
                 <span key={role} className="badge">
                   {role}
                 </span>

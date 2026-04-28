@@ -5,14 +5,10 @@ import { cache } from "react";
 import { BackendRequestError, executeBackendRequest } from "./backend-auth";
 import { readSessionCookie } from "./session-cookie";
 import { buildRefreshSessionRedirectPath } from "./refresh-session";
-import type { CurrentUser, StoredSession } from "../types";
+import type { AuthenticatedSession, CurrentUser, StoredSession } from "../types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-
-export type AuthenticatedSession = StoredSession & {
-  user: CurrentUser;
-};
 
 type SessionState =
   | { kind: "anonymous" }
