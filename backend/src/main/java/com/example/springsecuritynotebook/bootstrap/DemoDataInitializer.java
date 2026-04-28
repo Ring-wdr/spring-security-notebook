@@ -1,4 +1,4 @@
-package com.example.springsecuritynotebook.shared.bootstrap;
+package com.example.springsecuritynotebook.bootstrap;
 
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.persistence.ContentRepository;

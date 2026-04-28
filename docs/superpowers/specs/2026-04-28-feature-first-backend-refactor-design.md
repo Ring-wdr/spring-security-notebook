@@ -66,8 +66,9 @@ com.example.springsecuritynotebook
 │  │  └─ Content
 │  └─ persistence
 │     └─ ContentRepository
+├─ bootstrap
+│  └─ DemoDataInitializer
 └─ shared
-   ├─ bootstrap
    ├─ config
    └─ exception
 ```
@@ -102,6 +103,10 @@ complexity without improving the current learning goal.
 
 `persistence` packages hold Spring Data repositories. Do not add DAO adapter
 classes unless a concrete query or mapping problem appears.
+
+`bootstrap` is a composition package for startup data wiring that may depend on
+multiple features. It is intentionally separate from `shared` so `shared` can
+remain feature-independent.
 
 `auth` needs subscriber data for Spring Security. Prefer a narrow lookup
 boundary such as `SubscriberUserLookup` if the refactor would otherwise make
