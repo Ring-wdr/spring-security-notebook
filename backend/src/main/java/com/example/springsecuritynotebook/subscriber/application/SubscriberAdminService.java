@@ -29,8 +29,10 @@ public class SubscriberAdminService {
             .findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("ERROR_SUBSCRIBER_NOT_FOUND"));
 
+    List<SubscriberRole> roles = parseRoles(request.roleNames());
+
     subscriber.clearRoles();
-    parseRoles(request.roleNames()).forEach(subscriber::addRole);
+    roles.forEach(subscriber::addRole);
 
     return SubscriberSummaryResponse.from(subscriber);
   }
