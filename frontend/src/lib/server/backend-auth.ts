@@ -1,5 +1,9 @@
 import type { TokenPairResponse } from "../types";
 import { createDisplayError } from "../auth-errors";
+import {
+  getOpenApiErrorResponse,
+  refreshTokensWithBackendApi,
+} from "./openapi-client";
 
 type ExecuteBackendRequestOptions = {
   fetchImpl?: typeof fetch;
@@ -84,26 +88,26 @@ async function refreshTokens({
   | { ok: true; tokens: TokenPairResponse }
   | { ok: false; error: BackendRequestError }
 > {
-  const response = await fetchImpl(`${baseUrl}/api/auth/refresh`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${tokens.accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refreshToken: tokens.refreshToken }),
-  });
+  try {
+    return {
+      ok: true,
+      tokens: await refreshTokensWithBackendApi({
+        fetchImpl,
+        baseUrl,
+        tokens,
+      }),
+    };
+  } catch (error) {
+    const response = getOpenApiErrorResponse(error);
+    if (!response) {
+      throw error;
+    }
 
-  if (!response.ok) {
     return {
       ok: false,
       error: await toBackendRequestError(response),
     };
   }
-
-  return {
-    ok: true,
-    tokens: (await response.json()) as TokenPairResponse,
-  };
 }
 
 function createRequestInit(

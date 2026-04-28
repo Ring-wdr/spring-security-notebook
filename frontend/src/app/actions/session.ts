@@ -7,6 +7,10 @@ import { createDisplayError, type DisplayError } from "@/lib/auth-errors";
 import { executeBackendRequest } from "@/lib/server/backend-auth";
 import { clearSessionCookie, readSessionCookie, writeSessionCookie } from "@/lib/server/session-cookie";
 import { getApiBaseUrl } from "@/lib/server/session";
+import {
+  loginWithBackendApi,
+  openApiErrorToDisplayError,
+} from "@/lib/server/openapi-client";
 import type { CurrentUser, TokenPairResponse } from "@/lib/types";
 
 export type LoginFormState = {
@@ -26,25 +30,19 @@ export async function loginAction(
     };
   }
 
-  const response = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
+  let tokens: TokenPairResponse;
+
+  try {
+    tokens = await loginWithBackendApi({
+      baseUrl: getApiBaseUrl(),
       email,
       password,
-    }),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
+    });
+  } catch (error) {
     return {
-      error: await extractErrorMessage(response),
+      error: await openApiErrorToDisplayError(error),
     };
   }
-
-  let tokens = (await response.json()) as TokenPairResponse;
 
   try {
     await executeBackendRequest<CurrentUser>({
@@ -93,16 +91,4 @@ export async function logoutAction(): Promise<void> {
 
   clearSessionCookie(cookieStore);
   redirect("/login");
-}
-
-async function extractErrorMessage(response: Response): Promise<DisplayError> {
-  try {
-    const data = (await response.json()) as {
-      error?: string;
-      message?: string;
-    };
-    return createDisplayError(data.error ?? `HTTP_${response.status}`, data.message);
-  } catch {
-    return createDisplayError(`HTTP_${response.status}`);
-  }
 }
