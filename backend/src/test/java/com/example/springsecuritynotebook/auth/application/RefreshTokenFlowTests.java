@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
-import com.example.springsecuritynotebook.subscriber.domain.SubscriberRepository;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
+import com.example.springsecuritynotebook.subscriber.persistence.SubscriberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

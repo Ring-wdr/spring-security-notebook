@@ -1,7 +1,7 @@
 package com.example.springsecuritynotebook.auth.application;
 
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
-import com.example.springsecuritynotebook.subscriber.domain.SubscriberRepository;
+import com.example.springsecuritynotebook.subscriber.persistence.SubscriberRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

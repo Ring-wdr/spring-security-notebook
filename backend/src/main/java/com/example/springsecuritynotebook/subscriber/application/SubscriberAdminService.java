@@ -2,8 +2,8 @@ package com.example.springsecuritynotebook.subscriber.application;
 
 import com.example.springsecuritynotebook.auth.exception.ResourceNotFoundException;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
-import com.example.springsecuritynotebook.subscriber.domain.SubscriberRepository;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
+import com.example.springsecuritynotebook.subscriber.persistence.SubscriberRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

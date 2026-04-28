@@ -1,7 +1,9 @@
-package com.example.springsecuritynotebook.subscriber.domain;
+package com.example.springsecuritynotebook.subscriber.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
+import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnitUtil;
 import java.util.Optional;
