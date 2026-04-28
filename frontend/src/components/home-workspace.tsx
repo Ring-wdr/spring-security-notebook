@@ -51,7 +51,7 @@ export function HomeWorkspace({ session }: { session: StoredSession | null }) {
       intro="This frontend is wired against the live Spring Boot security pipeline. Log in, inspect the issued tokens, browse subscriber content, and try manager or admin-only workflows with the same session."
     >
       <DossierSection heading="Primary tracks">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3">
           {PRIMARY_TRACKS.map((track) => (
             <ActionTile
               key={track.href}

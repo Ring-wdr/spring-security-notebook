@@ -21,7 +21,7 @@ vi.mock("next/link", () => ({
 }));
 
 describe("HomeWorkspace", () => {
-  it("renders the home dossier surface with primary tracks and session rail", () => {
+  it("renders the home dossier surface with a compact primary-track layout and session rail", () => {
     const { container } = render(<HomeWorkspace session={null} />);
 
     expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
@@ -37,5 +37,15 @@ describe("HomeWorkspace", () => {
       screen.getByRole("heading", { name: "Current session" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(5);
+
+    const primaryTracks = screen
+      .getByRole("heading", { name: "Primary tracks" })
+      .closest("section");
+    const actionGrid = primaryTracks?.querySelector("div.grid");
+
+    expect(actionGrid).not.toBeNull();
+    expect(actionGrid).toHaveClass("md:grid-cols-2");
+    expect(actionGrid).toHaveClass("xl:grid-cols-3");
+    expect(actionGrid).not.toHaveClass("xl:grid-cols-5");
   });
 });
