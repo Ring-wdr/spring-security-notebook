@@ -29,9 +29,27 @@ public class SubscriberAdminService {
             .findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("ERROR_SUBSCRIBER_NOT_FOUND"));
 
+    List<SubscriberRole> roles = parseRoles(request.roleNames());
+
     subscriber.clearRoles();
-    request.roleNames().stream().map(SubscriberRole::valueOf).forEach(subscriber::addRole);
+    roles.forEach(subscriber::addRole);
 
     return SubscriberSummaryResponse.from(subscriber);
+  }
+
+  private List<SubscriberRole> parseRoles(List<String> roleNames) {
+    return roleNames.stream().map(this::parseRole).toList();
+  }
+
+  private SubscriberRole parseRole(String roleName) {
+    if (roleName == null || roleName.isBlank()) {
+      throw new IllegalArgumentException("Subscriber role must not be blank.");
+    }
+
+    try {
+      return SubscriberRole.valueOf(roleName);
+    } catch (IllegalArgumentException exception) {
+      throw new IllegalArgumentException("Unknown subscriber role: " + roleName, exception);
+    }
   }
 }

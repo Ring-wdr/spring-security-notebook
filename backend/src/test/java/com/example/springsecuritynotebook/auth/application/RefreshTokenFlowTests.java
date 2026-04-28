@@ -98,6 +98,43 @@ class RefreshTokenFlowTests {
   }
 
   @Test
+  void refreshUsesLatestSubscriberRoles() throws Exception {
+    SubscriberPrincipal originalPrincipal =
+        new SubscriberPrincipal(
+            "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
+
+    String expiredAccessToken =
+        jwtService.generateAccessToken(originalPrincipal.toAccessTokenClaims(), -30);
+    String refreshToken =
+        jwtService.generateRefreshToken(
+            "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
+    refreshTokenStore.store(
+        "user@example.com", refreshToken, jwtService.getRefreshTokenExpiresInSeconds());
+
+    Subscriber subscriber = subscriberRepository.findByEmail("user@example.com").orElseThrow();
+    subscriber.clearRoles();
+    subscriber.addRole(SubscriberRole.ROLE_MANAGER);
+    subscriberRepository.saveAndFlush(subscriber);
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/auth/refresh")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
+                    .contentType("application/json")
+                    .content(
+                        objectMapper.writeValueAsString(new RefreshTokenRequest(refreshToken))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    TokenPairResponse response =
+        objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
+
+    assertThat(jwtService.validateAccessToken(response.accessToken()).roleNames())
+        .containsExactly("ROLE_MANAGER");
+  }
+
+  @Test
   void logoutInvalidatesStoredRefreshToken() throws Exception {
     String accessToken = loginAndExtractToken("user@example.com", "1111");
 

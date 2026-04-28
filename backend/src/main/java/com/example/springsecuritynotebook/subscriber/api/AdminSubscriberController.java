@@ -24,13 +24,13 @@ public class AdminSubscriberController {
   }
 
   @GetMapping
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAuthority('USER_READ')")
   public List<SubscriberSummaryResponse> getSubscribers() {
     return subscriberAdminService.getSubscribers();
   }
 
   @PatchMapping("/{email}/role")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAuthority('USER_ROLE_UPDATE')")
   public SubscriberSummaryResponse updateRoles(
       @PathVariable String email, @Valid @RequestBody UpdateSubscriberRolesRequest request) {
     return subscriberAdminService.updateRoles(email, request);

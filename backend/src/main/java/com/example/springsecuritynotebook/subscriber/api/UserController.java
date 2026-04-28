@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   @GetMapping("/me")
-  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ME_READ')")
   public CurrentUserResponse getCurrentUser(
       @AuthenticationPrincipal SubscriberPrincipal principal) {
     return CurrentUserResponse.from(principal);

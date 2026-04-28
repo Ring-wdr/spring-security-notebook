@@ -46,6 +46,7 @@ class JwtProtectedApiTests {
   private MockMvc mockMvc;
   private String userToken;
   private String adminToken;
+  private String managerToken;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -68,8 +69,17 @@ class JwtProtectedApiTests {
             .build();
     admin.addRole(SubscriberRole.ROLE_ADMIN);
 
+    Subscriber manager =
+        Subscriber.builder()
+            .email("manager@example.com")
+            .password(passwordEncoder.encode("1111"))
+            .nickname("manager")
+            .build();
+    manager.addRole(SubscriberRole.ROLE_MANAGER);
+
     subscriberRepository.saveAndFlush(user);
     subscriberRepository.saveAndFlush(admin);
+    subscriberRepository.saveAndFlush(manager);
 
     contentRepository.saveAndFlush(
         Content.builder()
@@ -81,6 +91,7 @@ class JwtProtectedApiTests {
 
     this.userToken = loginAndExtractToken("user@example.com", "1111");
     this.adminToken = loginAndExtractToken("admin@example.com", "1111");
+    this.managerToken = loginAndExtractToken("manager@example.com", "1111");
   }
 
   @Test
@@ -132,14 +143,6 @@ class JwtProtectedApiTests {
 
   @Test
   void managerCanRequestAllContentsIncludingDrafts() throws Exception {
-    Subscriber manager =
-        Subscriber.builder()
-            .email("manager@example.com")
-            .password(passwordEncoder.encode("1111"))
-            .nickname("manager")
-            .build();
-    manager.addRole(SubscriberRole.ROLE_MANAGER);
-    subscriberRepository.saveAndFlush(manager);
     contentRepository.saveAndFlush(
         Content.builder()
             .title("Draft Content")
@@ -148,15 +151,78 @@ class JwtProtectedApiTests {
             .published(false)
             .build());
 
-    String managerToken = loginAndExtractToken("manager@example.com", "1111");
-
     mockMvc
         .perform(
             get("/api/content")
                 .queryParam("includeAll", "true")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].published").exists());
+        .andExpect(
+            jsonPath("$[?(@.title == 'Draft Content' && @.published == false)]").isNotEmpty());
+  }
+
+  @Test
+  void userCannotCreateContent() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "User Draft",
+                      "body": "users cannot create content",
+                      "category": "security",
+                      "published": true
+                    }
+                    """))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_DENIED"))
+        .andExpect(jsonPath("$.message").value("You do not have permission."));
+  }
+
+  @Test
+  void managerCanCreateContent() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "Manager Content",
+                      "body": "managers can create content",
+                      "category": "security",
+                      "published": true
+                    }
+                    """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.title").value("Manager Content"))
+        .andExpect(jsonPath("$.body").value("managers can create content"))
+        .andExpect(jsonPath("$.category").value("security"))
+        .andExpect(jsonPath("$.published").value(true));
+  }
+
+  @Test
+  void userIncludeAllDoesNotReturnDrafts() throws Exception {
+    contentRepository.saveAndFlush(
+        Content.builder()
+            .title("User Hidden Draft")
+            .body("draft")
+            .category("draft")
+            .published(false)
+            .build());
+
+    mockMvc
+        .perform(
+            get("/api/content")
+                .queryParam("includeAll", "true")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[?(@.published == false)]").isEmpty());
   }
 
   @Test
@@ -191,6 +257,45 @@ class JwtProtectedApiTests {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"roleNames\":[]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
+  void unknownRoleNameReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",\"ROLE_UNKNOWN\"]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
+  void blankRoleNameReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",\"\"]}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
+  void nullRoleNameReturnsBadRequestJson() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/admin/users/user@example.com/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roleNames\":[\"ROLE_USER\",null]}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
         .andExpect(jsonPath("$.message").value("Request payload is invalid."));

@@ -1,6 +1,8 @@
 package com.example.springsecuritynotebook.auth.application;
 
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
+import com.example.springsecuritynotebook.subscriber.application.SubscriberUserLookup;
+import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -9,14 +11,17 @@ public class AuthService {
   private final JwtService jwtService;
   private final RefreshTokenStore refreshTokenStore;
   private final AccessTokenBlocklist accessTokenBlocklist;
+  private final SubscriberUserLookup subscriberUserLookup;
 
   public AuthService(
       JwtService jwtService,
       RefreshTokenStore refreshTokenStore,
-      AccessTokenBlocklist accessTokenBlocklist) {
+      AccessTokenBlocklist accessTokenBlocklist,
+      SubscriberUserLookup subscriberUserLookup) {
     this.jwtService = jwtService;
     this.refreshTokenStore = refreshTokenStore;
     this.accessTokenBlocklist = accessTokenBlocklist;
+    this.subscriberUserLookup = subscriberUserLookup;
   }
 
   public TokenPairResponse issueTokens(SubscriberPrincipal principal) {
@@ -58,8 +63,15 @@ public class AuthService {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
+    Subscriber subscriber =
+        subscriberUserLookup
+            .findByEmail(email)
+            .orElseThrow(() -> new CustomJwtException("ERROR_ACCESS_TOKEN"));
+    AccessTokenClaims refreshedClaims = SubscriberPrincipal.from(subscriber).toAccessTokenClaims();
+
     String accessTokenValue =
-        jwtService.generateAccessToken(accessClaims, jwtService.getAccessTokenExpiresInSeconds());
+        jwtService.generateAccessToken(
+            refreshedClaims, jwtService.getAccessTokenExpiresInSeconds());
 
     long remainingTtl = refreshTokenStore.getRemainingTtl(email);
     String refreshTokenValue = request.refreshToken();

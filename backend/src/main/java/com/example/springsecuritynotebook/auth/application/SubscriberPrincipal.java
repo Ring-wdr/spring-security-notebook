@@ -3,7 +3,9 @@ package com.example.springsecuritynotebook.auth.application;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
 import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -56,6 +58,26 @@ public class SubscriberPrincipal extends User {
   }
 
   private static Collection<? extends GrantedAuthority> toAuthorities(List<String> roleNames) {
-    return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
+    List<SubscriberRole> roles =
+        roleNames.stream().map(SubscriberPrincipal::findRole).flatMap(Optional::stream).toList();
+
+    LinkedHashSet<String> authorityNames = new LinkedHashSet<>();
+    roles.stream().map(SubscriberRole::name).forEach(authorityNames::add);
+
+    roles.stream().flatMap(role -> role.getPermissionNames().stream()).forEach(authorityNames::add);
+
+    return authorityNames.stream().map(SimpleGrantedAuthority::new).toList();
+  }
+
+  private static Optional<SubscriberRole> findRole(String roleName) {
+    if (roleName == null) {
+      return Optional.empty();
+    }
+
+    try {
+      return Optional.of(SubscriberRole.valueOf(roleName));
+    } catch (IllegalArgumentException exception) {
+      return Optional.empty();
+    }
   }
 }

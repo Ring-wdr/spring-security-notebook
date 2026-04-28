@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
+import com.example.springsecuritynotebook.subscriber.application.SubscriberUserLookup;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,9 +21,12 @@ class AuthServiceTests {
 
   @Mock private AccessTokenBlocklist accessTokenBlocklist;
 
+  @Mock private SubscriberUserLookup subscriberUserLookup;
+
   @Test
   void logoutStillInvalidatesRefreshTokenWhenAccessTokenLifetimeLookupFails() {
-    AuthService authService = new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist);
+    AuthService authService =
+        new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist, subscriberUserLookup);
     SubscriberPrincipal principal =
         new SubscriberPrincipal("user@example.com", "", "user", false, List.of("ROLE_USER"));
 
@@ -37,7 +41,8 @@ class AuthServiceTests {
 
   @Test
   void logoutRevokesAccessTokenWhenLifetimeLookupSucceeds() {
-    AuthService authService = new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist);
+    AuthService authService =
+        new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist, subscriberUserLookup);
     SubscriberPrincipal principal =
         new SubscriberPrincipal("user@example.com", "", "user", false, List.of("ROLE_USER"));
 
