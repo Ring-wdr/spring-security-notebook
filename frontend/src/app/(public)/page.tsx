@@ -5,7 +5,7 @@ import { getOptionalSession } from "@/lib/server/session";
 
 export default function Home() {
   return (
-    <Suspense fallback={<HomeWorkspace session={null} />}>
+    <Suspense fallback={<HomeWorkspace session={null} sessionState="loading" />}>
       <HomeWorkspaceServer />
     </Suspense>
   );

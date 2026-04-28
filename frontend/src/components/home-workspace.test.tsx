@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { HomeWorkspace } from "./home-workspace";
+import type { StoredSession } from "@/lib/types";
 
 vi.mock("next/link", () => ({
   default: ({
@@ -21,7 +22,7 @@ vi.mock("next/link", () => ({
 }));
 
 describe("HomeWorkspace", () => {
-  it("renders the home dossier surface with a compact primary-track layout and session rail", () => {
+  it("renders the anonymous home surface with the practice tracks and session rail", () => {
     const { container } = render(<HomeWorkspace session={null} />);
 
     expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
@@ -37,15 +38,55 @@ describe("HomeWorkspace", () => {
       screen.getByRole("heading", { name: "Current session" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link")).toHaveLength(5);
+    expect(screen.getByText("anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to load identity")).toBeInTheDocument();
+  });
 
-    const primaryTracks = screen
-      .getByRole("heading", { name: "Primary tracks" })
+  it("renders a neutral loading state without claiming the visitor is anonymous", () => {
+    render(<HomeWorkspace session={null} sessionState="loading" />);
+
+    expect(screen.getByText("Resolving session")).toBeInTheDocument();
+    expect(
+      screen.getByText("Waiting for the server session snapshot"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Sign in to load identity"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("anonymous")).not.toBeInTheDocument();
+  });
+
+  it("renders authenticated profile and authorities when a session is available", () => {
+    const session: StoredSession = {
+      tokens: {
+        grantType: "Bearer",
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        accessTokenExpiresIn: 600,
+        refreshTokenExpiresIn: 86400,
+      },
+      user: {
+        email: "manager@example.com",
+        nickname: "manager",
+        social: false,
+        roleNames: ["ROLE_MANAGER", "ROLE_ADMIN"],
+      },
+    };
+
+    render(<HomeWorkspace session={session} />);
+
+    const currentSession = screen
+      .getByRole("heading", { name: "Current session" })
       .closest("section");
-    const actionGrid = primaryTracks?.querySelector("div.grid");
 
-    expect(actionGrid).not.toBeNull();
-    expect(actionGrid).toHaveClass("md:grid-cols-2");
-    expect(actionGrid).toHaveClass("xl:grid-cols-3");
-    expect(actionGrid).not.toHaveClass("xl:grid-cols-5");
+    expect(currentSession).not.toBeNull();
+
+    const currentSessionScope = within(currentSession!);
+    expect(currentSessionScope.getByText("authenticated")).toBeInTheDocument();
+    expect(currentSessionScope.getByText("manager")).toBeInTheDocument();
+    expect(
+      currentSessionScope.getAllByText("manager@example.com")[0],
+    ).toBeInTheDocument();
+    expect(currentSessionScope.getAllByText("ROLE_MANAGER").length).toBeGreaterThan(0);
+    expect(currentSessionScope.getAllByText("ROLE_ADMIN").length).toBeGreaterThan(0);
   });
 });

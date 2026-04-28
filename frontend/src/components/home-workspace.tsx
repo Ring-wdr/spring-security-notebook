@@ -1,10 +1,11 @@
 import {
   ActionTile,
-  DataTile,
   DossierRail,
   DossierSection,
   DossierSurface,
 } from "@/components/dossier";
+import type { ReactNode } from "react";
+
 import type { StoredSession } from "@/lib/types";
 
 const PRIMARY_TRACKS = [
@@ -41,8 +42,18 @@ const DEMO_ACCOUNTS = [
   { label: "Admin", email: "admin@example.com", role: "ROLE_ADMIN" },
 ] as const;
 
-export function HomeWorkspace({ session }: { session: StoredSession | null }) {
-  const profile = session?.user ?? null;
+type HomeWorkspaceProps = {
+  session: StoredSession | null;
+  sessionState?: "resolved" | "loading";
+};
+
+export function HomeWorkspace({
+  session,
+  sessionState = "resolved",
+}: HomeWorkspaceProps) {
+  const isLoading = sessionState === "loading";
+  const profile = !isLoading ? session?.user ?? null : null;
+  const sessionSummary = getSessionSummary({ isLoading, profile });
 
   return (
     <DossierSurface
@@ -67,37 +78,28 @@ export function HomeWorkspace({ session }: { session: StoredSession | null }) {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,_0.9fr)_minmax(0,_1.1fr)]">
           <div className="space-y-4">
             <p className="text-sm leading-7 text-[color:var(--dossier-muted-foreground)]">
-              Use the demo credentials from the backend initializer. Password
-              for all accounts is <strong>1111</strong>.
+              {isLoading ? (
+                <>
+                  Checking the stored session before showing the current
+                  identity and role mapping.
+                </>
+              ) : (
+                <>
+                  Use the demo credentials from the backend initializer.
+                  Password for all accounts is <strong>1111</strong>.
+                </>
+              )}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <DataTile
-                label="Status"
-                value={profile ? "authenticated" : "anonymous"}
-              />
-              <DataTile
+              <SessionMetricCard label="Status" value={sessionSummary.status} />
+              <SessionMetricCard
                 label="Profile"
-                value={profile ? profile.nickname : "No profile loaded"}
+                value={sessionSummary.profile}
               />
-              <DataTile
-                label="Email"
-                value={profile ? profile.email : "Sign in to load identity"}
-              />
-              <DataTile
+              <SessionMetricCard label="Email" value={sessionSummary.email} />
+              <SessionMetricCard
                 label="Authorities"
-                value={
-                  profile ? (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.roleNames.map((role) => (
-                        <span key={role} className="badge">
-                          {role}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    "Sign in to inspect role mapping"
-                  )
-                }
+                value={sessionSummary.authorities}
               />
             </div>
           </div>
@@ -135,5 +137,65 @@ export function HomeWorkspace({ session }: { session: StoredSession | null }) {
         </div>
       </DossierRail>
     </DossierSurface>
+  );
+}
+
+function getSessionSummary({
+  isLoading,
+  profile,
+}: {
+  isLoading: boolean;
+  profile: StoredSession["user"];
+}) {
+  if (isLoading) {
+    return {
+      status: "Resolving session",
+      profile: "Waiting for the server session snapshot",
+      email: "Identity details will appear once the request resolves",
+      authorities: "Role mapping will appear after session resolution",
+    };
+  }
+
+  if (profile) {
+    return {
+      status: "authenticated",
+      profile: profile.nickname,
+      email: profile.email,
+      authorities: (
+        <div className="flex flex-wrap gap-2">
+          {profile.roleNames.map((role) => (
+            <span key={role} className="badge">
+              {role}
+            </span>
+          ))}
+        </div>
+      ),
+    };
+  }
+
+  return {
+    status: "anonymous",
+    profile: "No profile loaded",
+    email: "Sign in to load identity",
+    authorities: "Sign in to inspect role mapping",
+  };
+}
+
+function SessionMetricCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="rounded-[20px] border border-[color:var(--dossier-border)] bg-[color:var(--dossier-surface-strong)] px-4 py-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--dossier-muted-foreground)]">
+        {label}
+      </p>
+      <div className="mt-3 text-sm font-medium text-[color:var(--dossier-foreground)]">
+        {value}
+      </div>
+    </div>
   );
 }
