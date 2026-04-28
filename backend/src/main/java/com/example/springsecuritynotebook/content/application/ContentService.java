@@ -5,6 +5,7 @@ import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.persistence.ContentRepository;
 import com.example.springsecuritynotebook.shared.exception.ResourceNotFoundException;
 import java.util.List;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,7 +92,8 @@ public class ContentService {
 
   private boolean canViewAll(SubscriberPrincipal principal) {
     return principal != null
-        && principal.getRoleNames().stream()
-            .anyMatch(role -> role.equals("ROLE_MANAGER") || role.equals("ROLE_ADMIN"));
+        && principal.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("CONTENT_DRAFT_READ"::equals);
   }
 }

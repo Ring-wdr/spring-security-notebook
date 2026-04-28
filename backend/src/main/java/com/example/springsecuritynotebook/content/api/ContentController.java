@@ -29,7 +29,7 @@ public class ContentController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('CONTENT_READ')")
   public List<ContentSummaryResponse> getContents(
       @AuthenticationPrincipal SubscriberPrincipal principal,
       @RequestParam(defaultValue = "false") boolean includeAll) {
@@ -37,7 +37,7 @@ public class ContentController {
   }
 
   @GetMapping("/{contentId}")
-  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('CONTENT_READ')")
   public ContentDetailResponse getContent(
       @AuthenticationPrincipal SubscriberPrincipal principal,
       @PathVariable Long contentId,
@@ -46,13 +46,13 @@ public class ContentController {
   }
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('CONTENT_WRITE')")
   public ContentDetailResponse createContent(@Valid @RequestBody ContentUpsertRequest request) {
     return contentService.createContent(request);
   }
 
   @PutMapping("/{contentId}")
-  @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('CONTENT_WRITE')")
   public ContentDetailResponse updateContent(
       @PathVariable Long contentId, @Valid @RequestBody ContentUpsertRequest request) {
     return contentService.updateContent(contentId, request);

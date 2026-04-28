@@ -35,7 +35,7 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('AUTH_LOGOUT')")
   public ResponseEntity<Void> logout(
       @AuthenticationPrincipal SubscriberPrincipal principal,
       @Parameter(hidden = true) @RequestHeader(HttpHeaders.AUTHORIZATION)
