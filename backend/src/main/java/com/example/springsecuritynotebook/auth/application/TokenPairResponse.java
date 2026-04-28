@@ -1,11 +1,13 @@
 package com.example.springsecuritynotebook.auth.application;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record TokenPairResponse(
-    String grantType,
-    String accessToken,
-    String refreshToken,
-    long accessTokenExpiresIn,
-    long refreshTokenExpiresIn) {
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String grantType,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String accessToken,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String refreshToken,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long accessTokenExpiresIn,
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long refreshTokenExpiresIn) {
   public TokenPairResponse withRefreshToken(String refreshToken, long refreshTokenExpiresIn) {
     return new TokenPairResponse(
         grantType, accessToken, refreshToken, accessTokenExpiresIn, refreshTokenExpiresIn);

@@ -1,8 +1,11 @@
 package com.example.springsecuritynotebook.auth.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -40,6 +44,41 @@ class SecurityConfigTests {
   @Test
   void actuatorHealthIsAccessibleWithoutAuthentication() throws Exception {
     mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+  }
+
+  @Test
+  void openApiDocsAreAccessibleWithoutAuthentication() throws Exception {
+    mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
+  }
+
+  @Test
+  void openApiDocsSkipJwtFilterEvenWithMalformedAuthorizationHeader() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs").header(HttpHeaders.AUTHORIZATION, "not-a-bearer-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void openApiDocsDoNotExposeAuthorizationHeaderAsOperationParameter() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(not(containsString("\"name\":\"Authorization\""))));
+  }
+
+  @Test
+  void openApiDocsExposeFormLoginEndpoint() throws Exception {
+    mockMvc
+        .perform(get("/v3/api-docs"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("\"/api/auth/login\"")))
+        .andExpect(content().string(containsString("\"application/x-www-form-urlencoded\"")))
+        .andExpect(content().string(containsString("\"LoginRequest\"")));
+  }
+
+  @Test
+  void swaggerUiIsAccessibleWithoutAuthentication() throws Exception {
+    mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
   }
 
   @Test

@@ -18,11 +18,24 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+  private static final List<String> SKIPPED_PATH_PATTERNS =
+      List.of(
+          "/api/auth/login",
+          "/api/auth/refresh",
+          "/actuator/health",
+          "/actuator/info",
+          "/swagger-ui.html",
+          "/swagger-ui/**",
+          "/v3/api-docs",
+          "/v3/api-docs/**");
 
   private final JwtService jwtService;
   private final AccessTokenBlocklist accessTokenBlocklist;
@@ -42,8 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     String requestUri = request.getRequestURI();
-    return List.of("/api/auth/login", "/api/auth/refresh", "/actuator/health", "/actuator/info")
-        .contains(requestUri);
+    return SKIPPED_PATH_PATTERNS.stream()
+        .anyMatch(pattern -> PATH_MATCHER.match(pattern, requestUri));
   }
 
   @Override

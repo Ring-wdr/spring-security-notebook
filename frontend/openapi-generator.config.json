@@ -1,0 +1,15 @@
+{
+  "generatorName": "typescript-fetch",
+  "inputSpec": "http://localhost:8080/v3/api-docs",
+  "outputDir": "src/generated/openapi",
+  "additionalProperties": {
+    "enumUnknownDefaultCase": true,
+    "modelPropertyNaming": "camelCase",
+    "npmName": "@spring-security-notebook/backend-api",
+    "supportsES6": true,
+    "stringEnums": true,
+    "useSingleRequestParameter": true,
+    "withInterfaces": true,
+    "withoutRuntimeChecks": true
+  }
+}
