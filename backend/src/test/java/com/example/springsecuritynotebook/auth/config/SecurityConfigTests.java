@@ -43,6 +43,16 @@ class SecurityConfigTests {
   }
 
   @Test
+  void openApiDocsAreAccessibleWithoutAuthentication() throws Exception {
+    mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
+  }
+
+  @Test
+  void swaggerUiIsAccessibleWithoutAuthentication() throws Exception {
+    mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
+  }
+
+  @Test
   void passwordEncoderEncodesAndMatches() {
     String rawPassword = "demo-password";
     String encodedPassword = passwordEncoder.encode(rawPassword);
