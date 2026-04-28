@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  AdminSubscriberControllerApi,
+  Configuration,
+  ContentControllerApi,
+  ResponseError,
+} from "@/generated/openapi/src";
+
 import { createDisplayError } from "./auth-errors";
 
 export class ApiClientError extends Error {
@@ -16,30 +23,26 @@ export class ApiClientError extends Error {
   }
 }
 
+const browserApiConfiguration = new Configuration({
+  basePath: "",
+});
+
+export const backendApi = {
+  adminSubscribers: new AdminSubscriberControllerApi(browserApiConfiguration),
+  content: new ContentControllerApi(browserApiConfiguration),
+};
+
 export async function apiRequest<T>(
-  path: string,
-  init: RequestInit = {},
+  operation: () => Promise<T>,
 ): Promise<T> {
-  const headers = new Headers(init.headers);
-  if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof ResponseError) {
+      await extractError(error.response);
+    }
+    throw error;
   }
-
-  const response = await fetch(path, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    await extractError(response);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
 }
 
 async function extractError(response: Response): Promise<never> {

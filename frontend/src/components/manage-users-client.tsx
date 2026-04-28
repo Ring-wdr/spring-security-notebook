@@ -1,6 +1,6 @@
 "use client";
 
-import { ApiClientError, apiRequest } from "@/lib/api-client";
+import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
 import type { SubscriberSummary } from "@/lib/types";
 import { startTransition, useOptimistic, useState } from "react";
 
@@ -43,7 +43,9 @@ export function ManageUsersClient({
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   async function reloadUsers() {
-    const response = await apiRequest<SubscriberSummary[]>("/api/admin/users");
+    const response = await apiRequest(() =>
+      backendApi.adminSubscribers.getSubscribers(),
+    );
     setUsers(response);
   }
 
@@ -83,12 +85,13 @@ export function ManageUsersClient({
     try {
       setSavingEmail(email);
       setError(null);
-      const response = await apiRequest<SubscriberSummary>(
-        `/api/admin/users/${encodeURIComponent(email)}/role`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ roleNames: nextUser.roleNames }),
-        },
+      const response = await apiRequest(() =>
+        backendApi.adminSubscribers.updateRoles({
+          email,
+          updateSubscriberRolesRequest: {
+            roleNames: nextUser.roleNames,
+          },
+        }),
       );
 
       setUsers((current) =>

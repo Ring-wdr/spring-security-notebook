@@ -1,7 +1,7 @@
 "use client";
 
-import { ApiClientError, apiRequest } from "@/lib/api-client";
-import type { ContentDetail, ContentSummary } from "@/lib/types";
+import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
+import type { ContentSummary } from "@/lib/types";
 import { type FormEvent, useState } from "react";
 
 type EditorState = {
@@ -33,8 +33,8 @@ export function ManageContentClient({
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   async function reloadContents() {
-    const response = await apiRequest<ContentSummary[]>(
-      "/api/content?includeAll=true",
+    const response = await apiRequest(() =>
+      backendApi.content.getContents({ includeAll: true }),
     );
     setItems(response);
   }
@@ -43,8 +43,8 @@ export function ManageContentClient({
     try {
       setLoadingDetailId(contentId);
       setError(null);
-      const detail = await apiRequest<ContentDetail>(
-        `/api/content/${contentId}?includeAll=true`,
+      const detail = await apiRequest(() =>
+        backendApi.content.getContent({ contentId, includeAll: true }),
       );
       setEditor({
         id: detail.id,
@@ -76,16 +76,20 @@ export function ManageContentClient({
       };
 
       if (editor.id == null) {
-        await apiRequest("/api/content", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        await apiRequest(() =>
+          backendApi.content.createContent({
+            contentUpsertRequest: payload,
+          }),
+        );
         setMessage("Content created.");
       } else {
-        await apiRequest(`/api/content/${editor.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
+        const contentId = editor.id;
+        await apiRequest(() =>
+          backendApi.content.updateContent({
+            contentId,
+            contentUpsertRequest: payload,
+          }),
+        );
         setMessage("Content updated.");
       }
 

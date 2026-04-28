@@ -1,8 +1,43 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ApiClientError, apiRequest } from "./api-client";
+import { ApiClientError, apiRequest, backendApi } from "./api-client";
 
 describe("apiRequest", () => {
+  it("uses generated OpenAPI client methods for typed endpoint requests", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json([
+          {
+            id: 1,
+            title: "JWT filter chain",
+            category: "security",
+            published: true,
+          },
+        ]),
+      );
+
+    const response = await apiRequest(() =>
+      backendApi.content.getContents({ includeAll: true }),
+    );
+
+    expect(response).toEqual([
+      {
+        id: 1,
+        title: "JWT filter chain",
+        category: "security",
+        published: true,
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith("/api/content?includeAll=true", {
+      body: undefined,
+      headers: {},
+      method: "GET",
+    });
+
+    fetchMock.mockRestore();
+  });
+
   it("throws a structured client error with backend code and message", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
@@ -20,7 +55,7 @@ describe("apiRequest", () => {
       );
 
     await expect(
-      apiRequest("/api/content"),
+      apiRequest(() => backendApi.content.getContents({})),
     ).rejects.toMatchObject({
       name: "ApiClientError",
       code: "ERROR_ACCESS_TOKEN",
