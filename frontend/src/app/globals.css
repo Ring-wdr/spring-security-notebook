@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f0e4;
-  --foreground: #1b211f;
-  --page-top: #f7f2e8;
-  --page-bottom: #efe4cf;
-  --surface: rgba(255, 252, 247, 0.88);
-  --surface-strong: #fff9ef;
-  --border: rgba(48, 62, 57, 0.12);
-  --border-strong: rgba(48, 62, 57, 0.24);
-  --muted-foreground: #65706c;
-  --accent: #1f6d63;
-  --accent-foreground: #f4f6f4;
-  --warn: #c56c34;
-  --shadow-soft: 0 18px 45px rgba(76, 61, 36, 0.12);
+  --background: #ecf1f5;
+  --foreground: #15202b;
+  --page-top: #f4f7fa;
+  --page-bottom: #dde6ee;
+  --surface: rgba(251, 253, 255, 0.82);
+  --surface-strong: #f8fbfd;
+  --border: rgba(27, 45, 63, 0.11);
+  --border-strong: rgba(27, 45, 63, 0.2);
+  --muted-foreground: #5d6d7d;
+  --accent: #275f7a;
+  --accent-foreground: #f3f7fa;
+  --warn: #56708a;
+  --shadow-soft: 0 18px 45px rgba(28, 47, 66, 0.1);
 }
 
 @theme inline {
@@ -25,19 +25,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #101714;
-    --foreground: #edf1ed;
-    --page-top: #111916;
-    --page-bottom: #15201c;
-    --surface: rgba(20, 29, 26, 0.88);
-    --surface-strong: #18221e;
-    --border: rgba(205, 221, 214, 0.12);
-    --border-strong: rgba(205, 221, 214, 0.22);
-    --muted-foreground: #a0b4ac;
-    --accent: #73cfb2;
-    --accent-foreground: #10231f;
-    --warn: #f3a15f;
-    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.34);
+    --background: #0f1722;
+    --foreground: #e7eef5;
+    --page-top: #121b27;
+    --page-bottom: #182433;
+    --surface: rgba(18, 28, 40, 0.84);
+    --surface-strong: #172230;
+    --border: rgba(212, 225, 238, 0.1);
+    --border-strong: rgba(212, 225, 238, 0.18);
+    --muted-foreground: #96a8bb;
+    --accent: #7fc0dd;
+    --accent-foreground: #10202b;
+    --warn: #8fa8bb;
+    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -129,4 +129,67 @@ a {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent);
+}
+
+.dossier-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-strong) 88%, white 12%),
+      var(--surface)
+    );
+  box-shadow: var(--shadow-soft);
+  padding: 1.75rem;
+}
+
+.dossier-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.dossier-section {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+  padding: 1.25rem;
+}
+
+.dossier-rail {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.action-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface-strong) 94%, white 6%);
+  padding: 1rem 1.1rem;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.action-tile:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 14px 30px rgba(28, 47, 66, 0.09);
+  transform: translateY(-1px);
+}
+
+.data-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.data-tile + .data-tile {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
 }
