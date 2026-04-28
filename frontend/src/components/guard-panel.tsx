@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { DossierSurface } from "@/components/dossier";
+
 export function GuardPanel({
   eyebrow = "Protected Route",
   title,
@@ -12,11 +14,10 @@ export function GuardPanel({
   children?: ReactNode;
 }) {
   return (
-    <section className="panel mx-auto max-w-3xl space-y-4">
-      <p className="eyebrow">{eyebrow}</p>
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <p className="text-sm text-[color:var(--muted-foreground)]">{body}</p>
-      {children}
-    </section>
+    <div className="mx-auto w-full max-w-3xl">
+      <DossierSurface eyebrow={eyebrow} title={title} intro={body}>
+        {children ?? null}
+      </DossierSurface>
+    </div>
   );
 }
