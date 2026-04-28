@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:components": "vitest run --config vitest.components.config.ts",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "gen:api": "openapi-generator-cli generate -c openapi-generator.config.json --global-property=modelDocs=false,modelTests=false,apiDocs=false,apiTests=false --openapi-generator-ignore-list README.md,package.json,tsconfig.json,tsconfig.esm.json,.npmignore,docs/** --minimal-update"
   },
   "dependencies": {
     "next": "16.2.4",
@@ -19,6 +20,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.31.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

@@ -26,6 +26,7 @@ frontend/
 ## Verification
 
 - 개발 서버: `npm run dev`
+- 백엔드 OpenAPI 타입 생성: `npm run gen:api` (backend `/v3/api-docs` 실행 필요)
 - 린트: `npm run lint`
 - 유닛 테스트: `npm run test:unit`
 - 컴포넌트 테스트: `npm run test:components`
