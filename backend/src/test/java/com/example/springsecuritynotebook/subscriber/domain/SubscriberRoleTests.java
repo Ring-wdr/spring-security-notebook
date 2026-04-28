@@ -1,11 +1,10 @@
-package com.example.springsecuritynotebook.auth.application;
+package com.example.springsecuritynotebook.subscriber.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.springsecuritynotebook.subscriber.domain.SubscriberRole;
 import org.junit.jupiter.api.Test;
 
-class SubscriberPrincipalTests {
+class SubscriberRoleTests {
 
   @Test
   void userRoleGrantsBasicPermissions() {
