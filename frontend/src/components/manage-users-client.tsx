@@ -1,5 +1,6 @@
 "use client";
 
+import { DossierSection, DossierSurface } from "@/components/dossier";
 import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
 import type { SubscriberSummary } from "@/lib/types";
 import { startTransition, useOptimistic, useState } from "react";
@@ -106,65 +107,75 @@ export function ManageUsersClient({
   }
 
   return (
-    <section className="panel space-y-6">
-      <div className="space-y-3">
-        <p className="eyebrow">Admin Surface</p>
-        <h1 className="text-3xl font-semibold">Manage subscriber roles</h1>
-        <p className="text-sm leading-7 text-[color:var(--muted-foreground)]">
-          Each change issues a{" "}
-          <code>PATCH /api/admin/users/{"{email}"}/role</code> request with the
-          currently checked role set.
-        </p>
-      </div>
-      {error ? (
-        <div className="rounded-[20px] border border-[color:var(--warn)]/35 bg-[color:var(--warn)]/12 px-4 py-3 text-sm text-[color:var(--warn)]">
-          <p className="font-semibold">{error.code}</p>
-          <p className="mt-1">{error.message}</p>
+    <DossierSurface
+      eyebrow="Admin Surface"
+      title="Manage subscriber roles"
+      intro='Each change issues a PATCH /api/admin/users/{email}/role request with the currently checked role set.'
+    >
+      <DossierSection heading="User role assignments">
+        <div className="space-y-4">
+          {error ? (
+            <div className="rounded-[20px] border border-[color:var(--warn)]/35 bg-[color:var(--warn)]/12 px-4 py-3 text-sm text-[color:var(--warn)]">
+              <p className="font-semibold">{error.code}</p>
+              <p className="mt-1">{error.message}</p>
+            </div>
+          ) : null}
+          <div className="grid gap-3">
+            {optimisticUsers.map((user) => (
+              <article
+                key={user.email}
+                className="user-role-row rounded-[22px] border border-[color:var(--dossier-border)] bg-[color:var(--dossier-surface-strong)] px-5 py-5"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-lg font-semibold">{user.nickname}</p>
+                      <span className="badge">
+                        {user.social ? "Social" : "Direct"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[color:var(--dossier-muted-foreground)]">
+                      {user.email}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start gap-3 lg:items-end">
+                    {savingEmail === user.email ? (
+                      <span className="text-sm text-[color:var(--dossier-muted-foreground)]">
+                        Saving...
+                      </span>
+                    ) : null}
+                    <div className="flex flex-wrap justify-start gap-3 lg:justify-end">
+                      {ALL_ROLES.map((role) => {
+                        const checked = user.roleNames.includes(role);
+                        return (
+                          <label
+                            key={role}
+                            className="flex items-center gap-2 rounded-full border border-[color:var(--dossier-border)] px-4 py-2 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) =>
+                                void toggleRole(
+                                  user.email,
+                                  role,
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            {role}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
-      ) : null}
-      <div className="grid gap-4">
-        {optimisticUsers.map((user) => (
-          <section
-            key={user.email}
-            className="rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-strong)] p-5"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold">{user.nickname}</p>
-                <p className="text-sm text-[color:var(--muted-foreground)]">
-                  {user.email}
-                </p>
-              </div>
-              {savingEmail === user.email ? (
-                <span className="text-sm text-[color:var(--muted-foreground)]">
-                  Saving...
-                </span>
-              ) : null}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {ALL_ROLES.map((role) => {
-                const checked = user.roleNames.includes(role);
-                return (
-                  <label
-                    key={role}
-                    className="flex items-center gap-2 rounded-full border border-[color:var(--border)] px-4 py-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(event) =>
-                        void toggleRole(user.email, role, event.target.checked)
-                      }
-                    />
-                    {role}
-                  </label>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
-    </section>
+      </DossierSection>
+    </DossierSurface>
   );
 }
 

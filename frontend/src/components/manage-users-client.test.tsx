@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,40 @@ import { ManageUsersClient } from "./manage-users-client";
 import { server } from "@/test/msw/server";
 
 describe("ManageUsersClient", () => {
+  it("renders one dossier workspace with user role rows", () => {
+    const { container } = render(
+      <ManageUsersClient
+        initialUsers={[
+          {
+            email: "user@example.com",
+            nickname: "user",
+            social: false,
+            roleNames: ["ROLE_USER"],
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelectorAll(".dossier-surface")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", { name: "Manage subscriber roles" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "User role assignments" }),
+    ).toBeInTheDocument();
+
+    expect(container.querySelectorAll(".user-role-row").length).toBeGreaterThan(0);
+
+    const firstRow = container.querySelector<HTMLElement>(".user-role-row");
+    expect(firstRow).not.toBeNull();
+    if (!firstRow) {
+      throw new Error("Expected at least one user role row.");
+    }
+
+    expect(within(firstRow).getByText("user")).toBeVisible();
+    expect(within(firstRow).getByText("user@example.com")).toBeVisible();
+  });
+
   it("keeps the final assigned role checked when removal is rejected locally", async () => {
     const user = userEvent.setup();
 
