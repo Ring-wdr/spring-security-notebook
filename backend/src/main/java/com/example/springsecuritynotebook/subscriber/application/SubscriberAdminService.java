@@ -30,8 +30,20 @@ public class SubscriberAdminService {
             .orElseThrow(() -> new ResourceNotFoundException("ERROR_SUBSCRIBER_NOT_FOUND"));
 
     subscriber.clearRoles();
-    request.roleNames().stream().map(SubscriberRole::valueOf).forEach(subscriber::addRole);
+    parseRoles(request.roleNames()).forEach(subscriber::addRole);
 
     return SubscriberSummaryResponse.from(subscriber);
+  }
+
+  private List<SubscriberRole> parseRoles(List<String> roleNames) {
+    return roleNames.stream().map(this::parseRole).toList();
+  }
+
+  private SubscriberRole parseRole(String roleName) {
+    try {
+      return SubscriberRole.valueOf(roleName);
+    } catch (IllegalArgumentException exception) {
+      throw new IllegalArgumentException("Unknown subscriber role: " + roleName, exception);
+    }
   }
 }
