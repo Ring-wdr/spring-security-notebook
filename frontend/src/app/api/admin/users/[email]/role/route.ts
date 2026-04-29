@@ -1,15 +1,21 @@
-import { proxyJsonRequest } from "@/lib/server/proxy-json";
+import type { UpdateSubscriberRolesRequest } from "@/generated/openapi/src/models";
+
+import { executeRouteOpenApiRequest } from "@/lib/server/openapi-route";
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ email: string }> },
 ) {
   const { email } = await context.params;
-  return proxyJsonRequest(`/api/admin/users/${encodeURIComponent(email)}/role`, {
-    method: "PATCH",
-    body: await request.text(),
-    headers: {
-      "Content-Type": request.headers.get("content-type") ?? "application/json",
-    },
+  return executeRouteOpenApiRequest({
+    createApi: ({ adminSubscribers }) => adminSubscribers,
+    parseBody: (request) =>
+      request.json() as Promise<UpdateSubscriberRolesRequest>,
+    request,
+    operation: (adminSubscribers, updateSubscriberRolesRequest) =>
+      adminSubscribers.updateRoles({
+        email,
+        updateSubscriberRolesRequest,
+      }),
   });
 }

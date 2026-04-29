@@ -1,5 +1,8 @@
-import { proxyJsonRequest } from "@/lib/server/proxy-json";
+import { executeRouteOpenApiRequest } from "@/lib/server/openapi-route";
 
 export async function GET() {
-  return proxyJsonRequest("/api/admin/users");
+  return executeRouteOpenApiRequest({
+    createApi: ({ adminSubscribers }) => adminSubscribers,
+    operation: (adminSubscribers) => adminSubscribers.getSubscribers(),
+  });
 }

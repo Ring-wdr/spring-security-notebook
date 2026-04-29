@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { ContentFeedView } from "@/components/content-feed-view";
 import { GuardPanel } from "@/components/guard-panel";
-import { fetchProtectedJson } from "@/lib/server/session";
+import { fetchProtectedOpenApi } from "@/lib/server/session";
 import type { ContentSummary } from "@/lib/types";
 
 export default function ContentListPage() {
@@ -22,9 +22,10 @@ export default function ContentListPage() {
 }
 
 async function ContentList() {
-  const items = await fetchProtectedJson<ContentSummary[]>(
-    "/api/content",
+  const items: ContentSummary[] = await fetchProtectedOpenApi(
     "/content",
+    ({ content }) => content,
+    (content) => content.getContents({}),
   );
 
   return <ContentFeedView items={items} />;

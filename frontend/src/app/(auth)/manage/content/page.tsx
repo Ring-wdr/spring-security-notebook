@@ -2,7 +2,11 @@ import { Suspense } from "react";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageContentClient } from "@/components/manage-content-client";
-import { fetchProtectedJson, hasAnyRole, requireSession } from "@/lib/server/session";
+import {
+  fetchProtectedOpenApi,
+  hasAnyRole,
+  requireSession,
+} from "@/lib/server/session";
 import type { ContentSummary } from "@/lib/types";
 
 const MANAGER_ROLES = ["ROLE_MANAGER", "ROLE_ADMIN"];
@@ -35,9 +39,10 @@ async function ManageContentWorkspace() {
     );
   }
 
-  const items = await fetchProtectedJson<ContentSummary[]>(
-    "/api/content?includeAll=true",
+  const items: ContentSummary[] = await fetchProtectedOpenApi(
     "/manage/content",
+    ({ content }) => content,
+    (content) => content.getContents({ includeAll: true }),
   );
 
   return <ManageContentClient initialItems={items} />;

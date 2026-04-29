@@ -2,14 +2,32 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { createDisplayError } from "../auth-errors";
-import { BackendRequestError, executeBackendRequest } from "./backend-auth";
-import { clearSessionCookie, readSessionCookie, writeSessionCookie } from "./session-cookie";
+import type { TokenPairResponse } from "../types";
+import type { BackendOpenApiClients } from "./openapi-client";
+import {
+  BackendRequestError,
+  executeOpenApiRequest,
+} from "./openapi-client";
+import {
+  clearSessionCookie,
+  readSessionCookie,
+  writeSessionCookie,
+} from "./session-cookie";
 import { getApiBaseUrl } from "./session";
 
-export async function proxyJsonRequest<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<NextResponse> {
+type ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody = undefined> = {
+  createApi: (clients: BackendOpenApiClients) => TApi;
+  operation: (api: TApi, body: TBody) => Promise<TResult>;
+  parseBody?: (request: Request) => Promise<TBody>;
+  request?: Request;
+};
+
+export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefined>({
+  createApi,
+  operation,
+  parseBody,
+  request,
+}: ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody>): Promise<NextResponse> {
   const cookieStore = await cookies();
   const tokens = readSessionCookie(cookieStore);
 
@@ -23,15 +41,32 @@ export async function proxyJsonRequest<T>(
     return response;
   }
 
-  let nextTokens = tokens;
+  let nextTokens: TokenPairResponse = tokens;
   let shouldClearSession = false;
 
   try {
-    const data = await executeBackendRequest<T>({
+    let body: TBody | undefined;
+    if (parseBody) {
+      if (!request) {
+        throw new Error("request is required when parseBody is provided");
+      }
+
+      try {
+        body = await parseBody(request);
+      } catch {
+        const displayError = createDisplayError("ERROR_BAD_REQUEST");
+        return NextResponse.json(
+          { error: displayError.code, message: displayError.message },
+          { status: 400 },
+        );
+      }
+    }
+
+    const data = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
-      path,
-      init,
       tokens,
+      createApi,
+      operation: (api) => operation(api, body as TBody),
       onTokensRotated(rotatedTokens) {
         nextTokens = rotatedTokens;
       },

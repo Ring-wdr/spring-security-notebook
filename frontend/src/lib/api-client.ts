@@ -25,7 +25,8 @@ export class ApiClientError extends Error {
 }
 
 const browserApiConfiguration = new Configuration({
-  basePath: "",
+  basePath:
+    typeof window === "undefined" ? "http://localhost:3000" : window.location.origin,
   fetchApi(input, init) {
     return fetch(input, {
       ...init,

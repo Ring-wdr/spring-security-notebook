@@ -1,16 +1,26 @@
-import { proxyJsonRequest } from "@/lib/server/proxy-json";
+import type { ContentUpsertRequest } from "@/generated/openapi/src/models";
+
+import { executeRouteOpenApiRequest } from "@/lib/server/openapi-route";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  return proxyJsonRequest(`/api/content${url.search}`);
+  return executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.getContents({
+        includeAll: url.searchParams.get("includeAll") === "true" || undefined,
+      }),
+  });
 }
 
 export async function POST(request: Request) {
-  return proxyJsonRequest("/api/content", {
-    method: "POST",
-    body: await request.text(),
-    headers: {
-      "Content-Type": request.headers.get("content-type") ?? "application/json",
-    },
+  return executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    parseBody: (request) => request.json() as Promise<ContentUpsertRequest>,
+    request,
+    operation: (content, contentUpsertRequest) =>
+      content.createContent({
+        contentUpsertRequest,
+      }),
   });
 }

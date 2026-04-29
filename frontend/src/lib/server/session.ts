@@ -2,10 +2,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-import { BackendRequestError, executeBackendRequest } from "./backend-auth";
+import type { BackendOpenApiClients } from "./openapi-client";
+import { BackendRequestError, executeOpenApiRequest } from "./openapi-client";
 import { readSessionCookie } from "./session-cookie";
 import { buildRefreshSessionRedirectPath } from "./refresh-session";
-import type { AuthenticatedSession, CurrentUser, StoredSession } from "../types";
+import type { AuthenticatedSession, StoredSession } from "../types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -23,10 +24,11 @@ const getSessionState = cache(async (): Promise<SessionState> => {
   }
 
   try {
-    const user = await executeBackendRequest<CurrentUser>({
+    const user = await executeOpenApiRequest({
       baseUrl: API_BASE_URL,
-      path: "/api/users/me",
       tokens,
+      createApi: ({ user }) => user,
+      operation: (user) => user.getCurrentUser(),
       skipRefresh: true,
     });
 
@@ -63,19 +65,19 @@ export async function requireSession(returnTo: string): Promise<AuthenticatedSes
   return sessionState.session;
 }
 
-export async function fetchProtectedJson<T>(
-  path: string,
+export async function fetchProtectedOpenApi<TApi, TResult>(
   returnTo: string,
-  init?: RequestInit,
-): Promise<T> {
+  createApi: (clients: BackendOpenApiClients) => TApi,
+  operation: (api: TApi) => Promise<TResult>,
+): Promise<TResult> {
   const session = await requireSession(returnTo);
 
   try {
-    return await executeBackendRequest<T>({
+    return await executeOpenApiRequest({
       baseUrl: API_BASE_URL,
-      path,
-      init,
       tokens: session.tokens,
+      createApi,
+      operation,
       skipRefresh: true,
     });
   } catch (error) {

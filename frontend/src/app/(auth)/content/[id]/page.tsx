@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { ContentDetailWorkspace } from "@/components/content-detail-workspace";
 import { GuardPanel } from "@/components/guard-panel";
-import { fetchProtectedJson } from "@/lib/server/session";
+import { fetchProtectedOpenApi } from "@/lib/server/session";
 import type { ContentDetail } from "@/lib/types";
 
 export default function ContentDetailPage({
@@ -31,9 +31,13 @@ async function ContentDetailSection({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = await fetchProtectedJson<ContentDetail>(
-    `/api/content/${id}`,
+  const item: ContentDetail = await fetchProtectedOpenApi(
     `/content/${id}`,
+    ({ content }) => content,
+    (content) =>
+      content.getContent({
+        contentId: Number(id),
+      }),
   );
 
   return <ContentDetailWorkspace item={item} />;
