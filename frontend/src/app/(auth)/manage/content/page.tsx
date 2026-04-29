@@ -1,8 +1,12 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageContentClient } from "@/components/manage-content-client";
-import { fetchProtectedJson, hasAnyRole, requireSession } from "@/lib/server/session";
+import { BackendRequestError } from "@/lib/server/backend-auth";
+import { getCachedManagedContentSummaries } from "@/lib/server/content-cache";
+import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
+import { hasAnyRole, requireSession } from "@/lib/server/session";
 import type { ContentSummary } from "@/lib/types";
 
 const MANAGER_ROLES = ["ROLE_MANAGER", "ROLE_ADMIN"];
@@ -35,10 +39,16 @@ async function ManageContentWorkspace() {
     );
   }
 
-  const items = await fetchProtectedJson<ContentSummary[]>(
-    "/api/content?includeAll=true",
-    "/manage/content",
-  );
+  let items: ContentSummary[];
+
+  try {
+    items = await getCachedManagedContentSummaries(session.tokens.accessToken);
+  } catch (error) {
+    if (error instanceof BackendRequestError && error.status === 401) {
+      redirect(buildRefreshSessionRedirectPath("/manage/content"));
+    }
+    throw error;
+  }
 
   return <ManageContentClient initialItems={items} />;
 }

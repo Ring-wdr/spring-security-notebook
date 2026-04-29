@@ -10,7 +10,7 @@ type ExecuteBackendRequestOptions = {
   baseUrl: string;
   path: string;
   init?: RequestInit;
-  tokens: TokenPairResponse | null;
+  tokens: Pick<TokenPairResponse, "accessToken"> | TokenPairResponse | null;
   onTokensRotated?: (tokens: TokenPairResponse) => void | Promise<void>;
   onUnauthorized?: () => void | Promise<void>;
   skipRefresh?: boolean;
@@ -43,7 +43,7 @@ export async function executeBackendRequest<T>({
   const request = createRequestInit(init, tokens?.accessToken);
   let response = await fetchImpl(`${baseUrl}${path}`, request);
 
-  if (response.status === 401 && tokens && !skipRefresh) {
+  if (response.status === 401 && tokens && !skipRefresh && canRefresh(tokens)) {
     const refreshResult = await refreshTokens({
       fetchImpl,
       baseUrl,
@@ -74,6 +74,12 @@ export async function executeBackendRequest<T>({
   }
 
   return (await response.json()) as T;
+}
+
+function canRefresh(
+  tokens: Pick<TokenPairResponse, "accessToken"> | TokenPairResponse,
+): tokens is TokenPairResponse {
+  return "refreshToken" in tokens;
 }
 
 async function refreshTokens({

@@ -1,8 +1,12 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
 import { ContentDetailWorkspace } from "@/components/content-detail-workspace";
 import { GuardPanel } from "@/components/guard-panel";
-import { fetchProtectedJson } from "@/lib/server/session";
+import { BackendRequestError } from "@/lib/server/backend-auth";
+import { getCachedContentDetail } from "@/lib/server/content-cache";
+import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
+import { requireSession } from "@/lib/server/session";
 import type { ContentDetail } from "@/lib/types";
 
 export default function ContentDetailPage({
@@ -31,10 +35,18 @@ async function ContentDetailSection({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = await fetchProtectedJson<ContentDetail>(
-    `/api/content/${id}`,
-    `/content/${id}`,
-  );
+  const returnTo = `/content/${id}`;
+  const session = await requireSession(returnTo);
+  let item: ContentDetail;
+
+  try {
+    item = await getCachedContentDetail(session.tokens.accessToken, id);
+  } catch (error) {
+    if (error instanceof BackendRequestError && error.status === 401) {
+      redirect(buildRefreshSessionRedirectPath(returnTo));
+    }
+    throw error;
+  }
 
   return <ContentDetailWorkspace item={item} />;
 }

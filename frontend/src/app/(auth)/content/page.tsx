@@ -1,8 +1,12 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
 import { ContentFeedView } from "@/components/content-feed-view";
 import { GuardPanel } from "@/components/guard-panel";
-import { fetchProtectedJson } from "@/lib/server/session";
+import { BackendRequestError } from "@/lib/server/backend-auth";
+import { getCachedContentSummaries } from "@/lib/server/content-cache";
+import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
+import { requireSession } from "@/lib/server/session";
 import type { ContentSummary } from "@/lib/types";
 
 export default function ContentListPage() {
@@ -22,10 +26,17 @@ export default function ContentListPage() {
 }
 
 async function ContentList() {
-  const items = await fetchProtectedJson<ContentSummary[]>(
-    "/api/content",
-    "/content",
-  );
+  const session = await requireSession("/content");
+  let items: ContentSummary[];
+
+  try {
+    items = await getCachedContentSummaries(session.tokens.accessToken);
+  } catch (error) {
+    if (error instanceof BackendRequestError && error.status === 401) {
+      redirect(buildRefreshSessionRedirectPath("/content"));
+    }
+    throw error;
+  }
 
   return <ContentFeedView items={items} />;
 }
