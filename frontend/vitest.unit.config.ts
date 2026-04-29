@@ -7,6 +7,9 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
+    env: {
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:8080",
+    },
     include: ["src/**/*.test.ts"],
     environment: "jsdom",
     environmentOptions: {

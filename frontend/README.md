@@ -44,8 +44,9 @@ frontend/
 
 ## Environment
 
-- API base URL 예시는 `frontend/.env.example`에 둡니다.
-- 기본값은 `http://localhost:8080`이며, 로컬 backend와 직접 연결됩니다.
+- 환경변수 예시는 `frontend/.env.example`에 둡니다.
+- `NEXT_PUBLIC_API_BASE_URL`은 필수이며 T3 Env가 URL 형식까지 검증합니다.
+- `CONTENT_PUBLISHED_SERVICE_TOKEN`, `CONTENT_MANAGEMENT_SERVICE_TOKEN`은 선택값입니다. 값이 없으면 현재 사용자 세션 토큰으로 backend API를 호출하고, 값이 있으면 최소 32자 이상이어야 캐시된 content fetch에 사용됩니다.
 
 ## Notes
 

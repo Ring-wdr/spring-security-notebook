@@ -1,7 +1,13 @@
 import "server-only";
 
-function requireServerEnv(name: string): string {
-  const value = process.env[name];
+import { env } from "@/env";
+
+type ContentServiceTokenName =
+  | "CONTENT_PUBLISHED_SERVICE_TOKEN"
+  | "CONTENT_MANAGEMENT_SERVICE_TOKEN";
+
+function requireContentServiceToken(name: ContentServiceTokenName): string {
+  const value = env[name];
   if (!value) {
     throw new Error(`${name} is required for cached content access`);
   }
@@ -9,22 +15,22 @@ function requireServerEnv(name: string): string {
   return value;
 }
 
-function hasServerEnv(name: string): boolean {
-  return Boolean(process.env[name]);
+function hasContentServiceToken(name: ContentServiceTokenName): boolean {
+  return Boolean(env[name]);
 }
 
 export function getContentPublishedServiceToken(): string {
-  return requireServerEnv("CONTENT_PUBLISHED_SERVICE_TOKEN");
+  return requireContentServiceToken("CONTENT_PUBLISHED_SERVICE_TOKEN");
 }
 
 export function getContentManagementServiceToken(): string {
-  return requireServerEnv("CONTENT_MANAGEMENT_SERVICE_TOKEN");
+  return requireContentServiceToken("CONTENT_MANAGEMENT_SERVICE_TOKEN");
 }
 
 export function hasContentPublishedServiceToken(): boolean {
-  return hasServerEnv("CONTENT_PUBLISHED_SERVICE_TOKEN");
+  return hasContentServiceToken("CONTENT_PUBLISHED_SERVICE_TOKEN");
 }
 
 export function hasContentManagementServiceToken(): boolean {
-  return hasServerEnv("CONTENT_MANAGEMENT_SERVICE_TOKEN");
+  return hasContentServiceToken("CONTENT_MANAGEMENT_SERVICE_TOKEN");
 }
