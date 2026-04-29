@@ -81,3 +81,30 @@ export async function unsafeGetCachedManagedContentSummariesAfterAuthorization()
     skipRefresh: true,
   });
 }
+
+export async function unsafeGetCachedManagedContentDetailAfterAuthorization(
+  id: string,
+): Promise<ContentDetail> {
+  "use cache";
+
+  const contentId = Number(id);
+
+  cacheLife(CONTENT_CACHE_LIFE);
+  cacheTag(
+    CONTENT_CACHE_TAG,
+    CONTENT_MANAGEMENT_CACHE_TAG,
+    contentDetailCacheTag(contentId),
+  );
+
+  return executeOpenApiRequest({
+    baseUrl: getApiBaseUrl(),
+    tokens: { accessToken: getContentManagementServiceToken() },
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.getContent({
+        contentId,
+        includeAll: true,
+      }),
+    skipRefresh: true,
+  });
+}

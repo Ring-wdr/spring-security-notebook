@@ -6,6 +6,7 @@ import type { ContentDetail, ContentSummary } from "@/lib/types";
 
 import { fetchProtectedOpenApi, requireSession } from "../session";
 import {
+  unsafeGetCachedManagedContentDetailAfterAuthorization,
   unsafeGetCachedManagedContentSummariesAfterAuthorization,
   unsafeGetCachedPublishedContentDetailAfterAuthorization,
   unsafeGetCachedPublishedContentSummariesAfterAuthorization,
@@ -78,4 +79,28 @@ export async function getManagedContentSummariesForRequest(): Promise<
   }
 
   return unsafeGetCachedManagedContentSummariesAfterAuthorization();
+}
+
+export async function getManagedContentDetailForRequest(
+  id: string,
+): Promise<ContentDetail> {
+  const session = await requireSession("/manage/content");
+
+  if (!canManageContent(session)) {
+    forbidden();
+  }
+
+  if (!hasContentManagementServiceToken()) {
+    return fetchProtectedOpenApi(
+      `/manage/content?contentId=${id}`,
+      ({ content }) => content,
+      (content) =>
+        content.getContent({
+          contentId: Number(id),
+          includeAll: true,
+        }),
+    );
+  }
+
+  return unsafeGetCachedManagedContentDetailAfterAuthorization(id);
 }
