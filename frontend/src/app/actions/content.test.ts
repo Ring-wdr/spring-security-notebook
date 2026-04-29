@@ -81,6 +81,8 @@ const mockedGetApiBaseUrl = vi.mocked(getApiBaseUrl);
 const mockedExecuteOpenApiRequest = vi.mocked(executeOpenApiRequest);
 const mockedUpdateContentAfterMutation = vi.mocked(updateContentAfterMutation);
 const mockedForbidden = vi.mocked(forbidden);
+const fakeCreateContent = vi.fn();
+const fakeUpdateContent = vi.fn();
 
 function createContentFormData(values: {
   id?: string;
@@ -104,12 +106,25 @@ describe("saveManagedContentAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedRequireSession.mockResolvedValue(managerSession);
-    mockedExecuteOpenApiRequest.mockResolvedValue({
-      id: 17,
-      title: "JWT",
-      body: "Token lifecycle",
+    fakeCreateContent.mockResolvedValue({
+      id: 41,
+      title: "Created JWT",
+      body: "Created lifecycle",
       category: "security",
       published: true,
+    });
+    fakeUpdateContent.mockResolvedValue({
+      id: 67,
+      title: "Updated Draft",
+      body: "Updated manager body",
+      category: "security",
+      published: false,
+    });
+    mockedExecuteOpenApiRequest.mockImplementation(async (options) => {
+      return options.operation({
+        createContent: fakeCreateContent,
+        updateContent: fakeUpdateContent,
+      });
     });
   });
 
@@ -126,21 +141,12 @@ describe("saveManagedContentAction", () => {
       formData,
     );
     const options = mockedExecuteOpenApiRequest.mock.calls[0]?.[0];
-    const createContent = vi.fn(async () => ({
-      id: 17,
-      title: "JWT",
-      body: "Token lifecycle",
-      category: "security",
-      published: true,
-    }));
-
-    await options?.operation({ createContent });
 
     expect(mockedRequireSession).toHaveBeenCalledWith("/manage/content");
     expect(mockedGetApiBaseUrl).toHaveBeenCalledOnce();
     expect(options?.baseUrl).toBe("http://localhost:8080");
     expect(options?.tokens).toBe(managerSession.tokens);
-    expect(createContent).toHaveBeenCalledWith({
+    expect(fakeCreateContent).toHaveBeenCalledWith({
       contentUpsertRequest: {
         title: "JWT",
         body: "Token lifecycle",
@@ -148,23 +154,17 @@ describe("saveManagedContentAction", () => {
         published: true,
       },
     });
-    expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(17);
+    expect(fakeUpdateContent).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(41);
     expect(state).toEqual({
       status: "success",
       message: "Content created.",
       error: null,
-      contentId: 17,
+      contentId: 41,
     });
   });
 
   it("updates content with the content id and parsed upsert request", async () => {
-    mockedExecuteOpenApiRequest.mockResolvedValueOnce({
-      id: 23,
-      title: "Draft",
-      body: "Manager body",
-      category: "security",
-      published: false,
-    });
     const formData = createContentFormData({
       id: "23",
       title: "Draft",
@@ -177,18 +177,9 @@ describe("saveManagedContentAction", () => {
       initialSaveContentFormState,
       formData,
     );
-    const options = mockedExecuteOpenApiRequest.mock.calls[0]?.[0];
-    const updateContent = vi.fn(async () => ({
-      id: 23,
-      title: "Draft",
-      body: "Manager body",
-      category: "security",
-      published: false,
-    }));
 
-    await options?.operation({ updateContent });
-
-    expect(updateContent).toHaveBeenCalledWith({
+    expect(fakeCreateContent).not.toHaveBeenCalled();
+    expect(fakeUpdateContent).toHaveBeenCalledWith({
       contentId: 23,
       contentUpsertRequest: {
         title: "Draft",
@@ -197,12 +188,12 @@ describe("saveManagedContentAction", () => {
         published: false,
       },
     });
-    expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(23);
+    expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(67);
     expect(state).toEqual({
       status: "success",
       message: "Content updated.",
       error: null,
-      contentId: 23,
+      contentId: 67,
     });
   });
 
@@ -229,6 +220,34 @@ describe("saveManagedContentAction", () => {
     });
   });
 
+  it.each(["abc", "NaN", "12.5", "0", "-7"])(
+    "returns a bad request error for an invalid submitted id %s without calling the backend",
+    async (id) => {
+      const formData = createContentFormData({
+        id,
+        title: "JWT",
+        body: "Token lifecycle",
+        category: "security",
+      });
+
+      const state = await saveManagedContentAction(
+        initialSaveContentFormState,
+        formData,
+      );
+
+      expect(mockedExecuteOpenApiRequest).not.toHaveBeenCalled();
+      expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+      expect(state).toEqual({
+        status: "error",
+        message: null,
+        error: {
+          code: "ERROR_BAD_REQUEST",
+          message: "Content id is invalid.",
+        },
+      });
+    },
+  );
+
   it("maps backend request errors to structured action errors", async () => {
     mockedExecuteOpenApiRequest.mockRejectedValue(
       new BackendRequestError("ERROR_ACCESS_DENIED", "No content access.", 403),
@@ -253,6 +272,7 @@ describe("saveManagedContentAction", () => {
         message: "No content access.",
       },
     });
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
   });
 
   it("calls forbidden for unauthorized non-manager sessions", async () => {

@@ -19,6 +19,11 @@ export type SaveContentFormState = {
   contentId?: number;
 };
 
+type ParsedContentId =
+  | { kind: "create" }
+  | { kind: "update"; id: number }
+  | { kind: "invalid" };
+
 export const initialSaveContentFormState: SaveContentFormState = {
   status: "idle",
   message: null,
@@ -35,8 +40,16 @@ export async function saveManagedContentAction(
     forbidden();
   }
 
-  const id = parseOptionalContentId(formData.get("id"));
+  const parsedId = parseContentId(formData.get("id"));
   const contentUpsertRequest = parseContentUpsertRequest(formData);
+
+  if (parsedId.kind === "invalid") {
+    return {
+      status: "error",
+      message: null,
+      error: createDisplayError("ERROR_BAD_REQUEST", "Content id is invalid."),
+    };
+  }
 
   if (!contentUpsertRequest) {
     return {
@@ -55,10 +68,10 @@ export async function saveManagedContentAction(
       tokens: session.tokens,
       createApi: ({ content }) => content,
       operation: (contentApi) =>
-        id == null
+        parsedId.kind === "create"
           ? contentApi.createContent({ contentUpsertRequest })
           : contentApi.updateContent({
-              contentId: id,
+              contentId: parsedId.id,
               contentUpsertRequest,
             }),
     });
@@ -67,7 +80,8 @@ export async function saveManagedContentAction(
 
     return {
       status: "success",
-      message: id == null ? "Content created." : "Content updated.",
+      message:
+        parsedId.kind === "create" ? "Content created." : "Content updated.",
       error: null,
       contentId: content.id,
     };
@@ -111,11 +125,15 @@ function parseContentUpsertRequest(
   };
 }
 
-function parseOptionalContentId(value: FormDataEntryValue | null): number | null {
+function parseContentId(value: FormDataEntryValue | null): ParsedContentId {
   if (value == null || value === "") {
-    return null;
+    return { kind: "create" };
   }
 
   const id = Number(value);
-  return Number.isFinite(id) ? id : null;
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return { kind: "invalid" };
+  }
+
+  return { kind: "update", id };
 }
