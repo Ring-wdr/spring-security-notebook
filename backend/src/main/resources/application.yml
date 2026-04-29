@@ -43,3 +43,7 @@ app:
     secret: ${APP_JWT_SECRET}
     access-token-minutes: 10
     refresh-token-minutes: 1440
+  service-tokens:
+    content:
+      published: ${APP_CONTENT_PUBLISHED_SERVICE_TOKEN:}
+      management: ${APP_CONTENT_MANAGEMENT_SERVICE_TOKEN:}

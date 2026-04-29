@@ -1,9 +1,9 @@
 package com.example.springsecuritynotebook.content.application;
 
-import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.persistence.ContentRepository;
 import com.example.springsecuritynotebook.shared.exception.ResourceNotFoundException;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,8 @@ public class ContentService {
 
   @Transactional(readOnly = true)
   public List<ContentSummaryResponse> getContents(
-      SubscriberPrincipal principal, boolean includeAll) {
-    if (includeAll && canViewAll(principal)) {
+      Collection<? extends GrantedAuthority> authorities, boolean includeAll) {
+    if (includeAll && canViewAll(authorities)) {
       return getAllContents();
     }
 
@@ -30,8 +30,8 @@ public class ContentService {
 
   @Transactional(readOnly = true)
   public ContentDetailResponse getContent(
-      SubscriberPrincipal principal, Long contentId, boolean includeAll) {
-    if (includeAll && canViewAll(principal)) {
+      Collection<? extends GrantedAuthority> authorities, Long contentId, boolean includeAll) {
+    if (includeAll && canViewAll(authorities)) {
       return getAnyContent(contentId);
     }
 
@@ -90,10 +90,9 @@ public class ContentService {
     return ContentDetailResponse.from(content);
   }
 
-  private boolean canViewAll(SubscriberPrincipal principal) {
-    return principal != null
-        && principal.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch("CONTENT_DRAFT_READ"::equals);
+  private boolean canViewAll(Collection<? extends GrantedAuthority> authorities) {
+    return authorities.stream()
+        .map(GrantedAuthority::getAuthority)
+        .anyMatch("CONTENT_DRAFT_READ"::equals);
   }
 }

@@ -32,7 +32,7 @@ describe("ManageContentClient", () => {
 
   it("loads selected content details into the editor", async () => {
     server.use(
-      http.get("http://localhost:3000/api/content/:id", ({ params }) => {
+      http.get("http://localhost:3000/api/manage/content/:id", ({ params }) => {
         if (params.id !== "1") {
           return HttpResponse.json(
             {
@@ -114,7 +114,7 @@ describe("ManageContentClient", () => {
           { status: 201 },
         );
       }),
-      http.get("http://localhost:3000/api/content", () =>
+      http.get("http://localhost:3000/api/manage/content", () =>
         HttpResponse.json(contents),
       ),
     );
@@ -154,7 +154,7 @@ describe("ManageContentClient", () => {
     ];
 
     server.use(
-      http.get("http://localhost:3000/api/content/:id", () =>
+      http.get("http://localhost:3000/api/manage/content/:id", () =>
         HttpResponse.json({
           id: 1,
           title: "JWT Basics",
@@ -183,7 +183,7 @@ describe("ManageContentClient", () => {
           ...body,
         });
       }),
-      http.get("http://localhost:3000/api/content", () =>
+      http.get("http://localhost:3000/api/manage/content", () =>
         HttpResponse.json(contents),
       ),
     );
@@ -235,7 +235,7 @@ describe("ManageContentClient", () => {
 
   it("resets the editor back to the empty create state", async () => {
     server.use(
-      http.get("http://localhost:3000/api/content/:id", () =>
+      http.get("http://localhost:3000/api/manage/content/:id", () =>
         HttpResponse.json({
           id: 1,
           title: "JWT Basics",

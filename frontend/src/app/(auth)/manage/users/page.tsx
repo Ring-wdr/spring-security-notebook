@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { forbidden } from "next/navigation";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageUsersClient } from "@/components/manage-users-client";
@@ -24,12 +25,7 @@ async function ManageUsersWorkspace() {
   const session = await requireSession("/manage/users");
 
   if (!hasAnyRole(session, ["ROLE_ADMIN"])) {
-    return (
-      <GuardPanel
-        title="Access restricted"
-        body="This page is reserved for admin roles in the practice app."
-      />
-    );
+    forbidden();
   }
 
   const users = await fetchProtectedOpenApi(

@@ -2,7 +2,7 @@
 
 import { DossierRail, DossierSection, DossierSurface } from "@/components/dossier";
 import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
-import type { ContentSummary } from "@/lib/types";
+import type { ContentDetail, ContentSummary } from "@/lib/types";
 import { type FormEvent, useId, useState } from "react";
 
 type EditorState = {
@@ -35,9 +35,7 @@ export function ManageContentClient({
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
 
   async function reloadContents() {
-    const response = await apiRequest(() =>
-      backendApi.content.getContents({ includeAll: true }),
-    );
+    const response = await fetchManagedContentSummaries();
     setItems(response);
   }
 
@@ -45,9 +43,7 @@ export function ManageContentClient({
     try {
       setLoadingDetailId(contentId);
       setError(null);
-      const detail = await apiRequest(() =>
-        backendApi.content.getContent({ contentId, includeAll: true }),
-      );
+      const detail = await fetchManagedContentDetail(contentId);
       setEditor({
         id: detail.id,
         title: detail.title,
@@ -269,4 +265,42 @@ function toContentError(error: unknown) {
     code: "ERROR_CONTENT",
     message: "Unable to complete the content request.",
   };
+}
+
+async function fetchManagedContentSummaries(): Promise<ContentSummary[]> {
+  return fetchManagedContent("/api/manage/content");
+}
+
+async function fetchManagedContentDetail(id: number): Promise<ContentDetail> {
+  return fetchManagedContent(`/api/manage/content/${id}`);
+}
+
+async function fetchManagedContent<T>(path: string): Promise<T> {
+  const response = await fetch(path, { cache: "no-store" });
+
+  if (!response.ok) {
+    await extractManagedContentError(response);
+  }
+
+  return (await response.json()) as T;
+}
+
+async function extractManagedContentError(response: Response): Promise<never> {
+  try {
+    const data = (await response.json()) as { error?: string; message?: string };
+    throw new ApiClientError(
+      data.error ?? `HTTP_${response.status}`,
+      data.message ?? `HTTP_${response.status}`,
+      response.status,
+    );
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+    throw new ApiClientError(
+      `HTTP_${response.status}`,
+      `HTTP_${response.status}`,
+      response.status,
+    );
+  }
 }

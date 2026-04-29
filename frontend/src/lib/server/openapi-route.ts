@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { createDisplayError } from "../auth-errors";
-import type { TokenPairResponse } from "../types";
+import type { CurrentUser, TokenPairResponse } from "../types";
 import type { BackendOpenApiClients } from "./openapi-client";
 import {
   BackendRequestError,
@@ -17,16 +17,20 @@ import { getApiBaseUrl } from "./session";
 
 type ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody = undefined> = {
   createApi: (clients: BackendOpenApiClients) => TApi;
+  onSuccess?: (data: TResult) => void | Promise<void>;
   operation: (api: TApi, body: TBody) => Promise<TResult>;
   parseBody?: (request: Request) => Promise<TBody>;
   request?: Request;
+  requiredRoles?: string[];
 };
 
 export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefined>({
   createApi,
+  onSuccess,
   operation,
   parseBody,
   request,
+  requiredRoles = [],
 }: ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody>): Promise<NextResponse> {
   const cookieStore = await cookies();
   const tokens = readSessionCookie(cookieStore);
@@ -45,6 +49,29 @@ export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefine
   let shouldClearSession = false;
 
   try {
+    if (requiredRoles.length > 0) {
+      const currentUser = await executeOpenApiRequest({
+        baseUrl: getApiBaseUrl(),
+        tokens,
+        createApi: ({ user }) => user,
+        operation: (user) => user.getCurrentUser(),
+        onTokensRotated(rotatedTokens) {
+          nextTokens = rotatedTokens;
+        },
+        onUnauthorized() {
+          shouldClearSession = true;
+        },
+      });
+
+      if (!hasAnyRequiredRole(currentUser, requiredRoles)) {
+        const response = forbiddenResponse();
+        if (nextTokens !== tokens) {
+          writeSessionCookie(response.cookies, nextTokens);
+        }
+        return response;
+      }
+    }
+
     let body: TBody | undefined;
     if (parseBody) {
       if (!request) {
@@ -64,7 +91,7 @@ export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefine
 
     const data = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
-      tokens,
+      tokens: nextTokens,
       createApi,
       operation: (api) => operation(api, body as TBody),
       onTokensRotated(rotatedTokens) {
@@ -74,6 +101,8 @@ export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefine
         shouldClearSession = true;
       },
     });
+
+    await onSuccess?.(data);
 
     const response = NextResponse.json(data);
     if (nextTokens !== tokens) {
@@ -106,4 +135,19 @@ export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefine
 
     return response;
   }
+}
+
+function hasAnyRequiredRole(
+  currentUser: CurrentUser,
+  requiredRoles: string[],
+): boolean {
+  return requiredRoles.some((role) => currentUser.roleNames.includes(role));
+}
+
+function forbiddenResponse(): NextResponse {
+  const displayError = createDisplayError("ERROR_ACCESS_DENIED");
+  return NextResponse.json(
+    { error: displayError.code, message: displayError.message },
+    { status: 403 },
+  );
 }
