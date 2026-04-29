@@ -1,10 +1,12 @@
+import type { Route } from "next";
+
 import { createDisplayError, getErrorCode } from "@/lib/auth-errors";
 import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
 
 type LoginGateState =
   | {
       type: "redirect";
-      location: string;
+      location: Route;
     }
   | {
       type: "render";

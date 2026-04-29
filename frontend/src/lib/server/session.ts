@@ -7,9 +7,9 @@ import { BackendRequestError, executeOpenApiRequest } from "./openapi-client";
 import { readSessionCookie } from "./session-cookie";
 import { buildRefreshSessionRedirectPath } from "./refresh-session";
 import type { AuthenticatedSession, StoredSession } from "../types";
+import { env } from "@/env";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const API_BASE_URL = env.NEXT_PUBLIC_API_BASE_URL;
 
 type SessionState =
   | { kind: "anonymous" }

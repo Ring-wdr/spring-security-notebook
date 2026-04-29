@@ -7,11 +7,9 @@ import { cookies } from "next/headers";
 import { readSessionCookie } from "@/lib/server/session-cookie";
 import { getLoginGateState } from "./login-gate";
 
-export default function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string | string[] }>;
-}) {
+type LoginPageProps = PageProps<"/login">;
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <Suspense fallback={<LoginLayout />}>
       <LoginGate searchParams={searchParams} />
@@ -22,7 +20,7 @@ export default function LoginPage({
 async function LoginGate({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string | string[] }>;
+  searchParams: LoginPageProps["searchParams"];
 }) {
   const [session, cookieStore, params] = await Promise.all([
     getOptionalSession(),

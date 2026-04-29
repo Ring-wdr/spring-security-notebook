@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -7,7 +8,7 @@ export function ActiveNavLink({
   href,
   label,
 }: {
-  href: string;
+  href: Route;
   label: string;
 }) {
   const pathname = usePathname();

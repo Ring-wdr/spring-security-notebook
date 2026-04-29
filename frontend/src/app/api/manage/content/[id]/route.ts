@@ -2,7 +2,7 @@ import { getManagedContentDetailResponse } from "@/lib/server/content/content-ro
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ id: string }> },
+  context: RouteContext<"/api/manage/content/[id]">,
 ) {
   const { id } = await context.params;
   return getManagedContentDetailResponse(id);

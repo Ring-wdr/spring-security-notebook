@@ -5,7 +5,7 @@ import {
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ id: string }> },
+  context: RouteContext<"/api/content/[id]">,
 ) {
   const { id } = await context.params;
   return getPublishedContentDetailResponse(id);
@@ -13,7 +13,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  context: { params: Promise<{ id: string }> },
+  context: RouteContext<"/api/content/[id]">,
 ) {
   const { id } = await context.params;
   return updateManagedContentResponse(id, request);

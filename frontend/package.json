@@ -14,10 +14,12 @@
     "gen:api": "node -e \"fs.rmSync('src/generated/openapi',{recursive:true,force:true})\" && openapi-generator-cli generate -c openapi-generator.config.json --global-property=modelDocs=false,modelTests=false,apiDocs=false,apiTests=false --openapi-generator-ignore-list README.md,package.json,tsconfig.json,tsconfig.esm.json,.npmignore,docs/** --minimal-update"
   },
   "dependencies": {
+    "@t3-oss/env-nextjs": "^0.13.11",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.31.1",
