@@ -15,15 +15,19 @@ import {
 } from "./session-cookie";
 import { getApiBaseUrl } from "./session";
 
-type ExecuteRouteOpenApiRequestOptions<TApi, TResult> = {
+type ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody = undefined> = {
   createApi: (clients: BackendOpenApiClients) => TApi;
-  operation: (api: TApi) => Promise<TResult>;
+  operation: (api: TApi, body: TBody) => Promise<TResult>;
+  parseBody?: (request: Request) => Promise<TBody>;
+  request?: Request;
 };
 
-export async function executeRouteOpenApiRequest<TApi, TResult>({
+export async function executeRouteOpenApiRequest<TApi, TResult, TBody = undefined>({
   createApi,
   operation,
-}: ExecuteRouteOpenApiRequestOptions<TApi, TResult>): Promise<NextResponse> {
+  parseBody,
+  request,
+}: ExecuteRouteOpenApiRequestOptions<TApi, TResult, TBody>): Promise<NextResponse> {
   const cookieStore = await cookies();
   const tokens = readSessionCookie(cookieStore);
 
@@ -41,11 +45,28 @@ export async function executeRouteOpenApiRequest<TApi, TResult>({
   let shouldClearSession = false;
 
   try {
+    let body: TBody | undefined;
+    if (parseBody) {
+      if (!request) {
+        throw new Error("request is required when parseBody is provided");
+      }
+
+      try {
+        body = await parseBody(request);
+      } catch {
+        const displayError = createDisplayError("ERROR_BAD_REQUEST");
+        return NextResponse.json(
+          { error: displayError.code, message: displayError.message },
+          { status: 400 },
+        );
+      }
+    }
+
     const data = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
       tokens,
       createApi,
-      operation,
+      operation: (api) => operation(api, body as TBody),
       onTokensRotated(rotatedTokens) {
         nextTokens = rotatedTokens;
       },

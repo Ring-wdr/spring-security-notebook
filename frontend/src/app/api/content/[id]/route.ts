@@ -23,10 +23,11 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const contentUpsertRequest = (await request.json()) as ContentUpsertRequest;
   return executeRouteOpenApiRequest({
     createApi: ({ content }) => content,
-    operation: (content) =>
+    parseBody: (request) => request.json() as Promise<ContentUpsertRequest>,
+    request,
+    operation: (content, contentUpsertRequest) =>
       content.updateContent({
         contentId: Number(id),
         contentUpsertRequest,

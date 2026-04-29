@@ -7,12 +7,12 @@ export async function PATCH(
   context: { params: Promise<{ email: string }> },
 ) {
   const { email } = await context.params;
-  const updateSubscriberRolesRequest =
-    (await request.json()) as UpdateSubscriberRolesRequest;
-
   return executeRouteOpenApiRequest({
     createApi: ({ adminSubscribers }) => adminSubscribers,
-    operation: (adminSubscribers) =>
+    parseBody: (request) =>
+      request.json() as Promise<UpdateSubscriberRolesRequest>,
+    request,
+    operation: (adminSubscribers, updateSubscriberRolesRequest) =>
       adminSubscribers.updateRoles({
         email,
         updateSubscriberRolesRequest,
