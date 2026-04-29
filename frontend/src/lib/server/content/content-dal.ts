@@ -84,7 +84,8 @@ export async function getManagedContentSummariesForRequest(): Promise<
 export async function getManagedContentDetailForRequest(
   id: string,
 ): Promise<ContentDetail> {
-  const session = await requireSession("/manage/content");
+  const returnTo = `/manage/content?contentId=${id}`;
+  const session = await requireSession(returnTo);
 
   if (!canManageContent(session)) {
     forbidden();
@@ -92,7 +93,7 @@ export async function getManagedContentDetailForRequest(
 
   if (!hasContentManagementServiceToken()) {
     return fetchProtectedOpenApi(
-      `/manage/content?contentId=${id}`,
+      returnTo,
       ({ content }) => content,
       (content) =>
         content.getContent({

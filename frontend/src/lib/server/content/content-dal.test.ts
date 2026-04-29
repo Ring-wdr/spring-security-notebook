@@ -164,7 +164,20 @@ describe("content DAL", () => {
 
     await getManagedContentDetailForRequest("9");
 
+    const [returnTo, , operation] = mockedFetchProtectedOpenApi.mock.calls[0];
+    const getContent = vi.fn();
+
+    await operation({ getContent });
+
+    expect(mockedRequireSession).toHaveBeenCalledWith(
+      "/manage/content?contentId=9",
+    );
     expect(mockedCachedManagedDetail).not.toHaveBeenCalled();
     expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
+    expect(returnTo).toBe("/manage/content?contentId=9");
+    expect(getContent).toHaveBeenCalledWith({
+      contentId: 9,
+      includeAll: true,
+    });
   });
 });
