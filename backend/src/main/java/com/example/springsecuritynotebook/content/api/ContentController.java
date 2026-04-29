@@ -1,6 +1,5 @@
 package com.example.springsecuritynotebook.content.api;
 
-import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.handler.ErrorResponse;
 import com.example.springsecuritynotebook.content.application.ContentDetailResponse;
 import com.example.springsecuritynotebook.content.application.ContentService;
@@ -17,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -72,14 +71,14 @@ public class ContentController {
                 schema = @Schema(implementation = ErrorResponse.class)))
   })
   public List<ContentSummaryResponse> getContents(
-      @AuthenticationPrincipal SubscriberPrincipal principal,
+      Authentication authentication,
       @Parameter(
               description =
                   "Requests draft content as well. Effective only for users with CONTENT_DRAFT_READ.",
               example = "false")
           @RequestParam(defaultValue = "false")
           boolean includeAll) {
-    return contentService.getContents(principal, includeAll);
+    return contentService.getContents(authentication.getAuthorities(), includeAll);
   }
 
   @GetMapping("/{contentId}")
@@ -120,7 +119,7 @@ public class ContentController {
                 schema = @Schema(implementation = ErrorResponse.class)))
   })
   public ContentDetailResponse getContent(
-      @AuthenticationPrincipal SubscriberPrincipal principal,
+      Authentication authentication,
       @PathVariable Long contentId,
       @Parameter(
               description =
@@ -128,7 +127,7 @@ public class ContentController {
               example = "false")
           @RequestParam(defaultValue = "false")
           boolean includeAll) {
-    return contentService.getContent(principal, contentId, includeAll);
+    return contentService.getContent(authentication.getAuthorities(), contentId, includeAll);
   }
 
   @PostMapping

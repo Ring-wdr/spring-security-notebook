@@ -5,34 +5,59 @@ import { forbidden } from "next/navigation";
 import type { ContentDetail, ContentSummary } from "@/lib/types";
 
 import { fetchProtectedOpenApi, requireSession } from "../session";
-import { canManageContent } from "./permissions";
+import {
+  unsafeGetCachedManagedContentSummariesAfterAuthorization,
+  unsafeGetCachedPublishedContentDetailAfterAuthorization,
+  unsafeGetCachedPublishedContentSummariesAfterAuthorization,
+} from "./cached-content";
+import { canManageContent, canViewPublishedContent } from "./permissions";
+import {
+  hasContentManagementServiceToken,
+  hasContentPublishedServiceToken,
+} from "./service-tokens";
 
 export async function getPublishedContentSummariesForRequest(
   returnTo: string,
 ): Promise<ContentSummary[]> {
-  await requireSession(returnTo);
+  const session = await requireSession(returnTo);
 
-  return fetchProtectedOpenApi(
-    returnTo,
-    ({ content }) => content,
-    (content) => content.getContents({}),
-  );
+  if (!canViewPublishedContent(session)) {
+    forbidden();
+  }
+
+  if (!hasContentPublishedServiceToken()) {
+    return fetchProtectedOpenApi(
+      returnTo,
+      ({ content }) => content,
+      (content) => content.getContents({}),
+    );
+  }
+
+  return unsafeGetCachedPublishedContentSummariesAfterAuthorization();
 }
 
 export async function getContentDetailForRequest(
   id: string,
   returnTo: string,
 ): Promise<ContentDetail> {
-  await requireSession(returnTo);
+  const session = await requireSession(returnTo);
 
-  return fetchProtectedOpenApi(
-    returnTo,
-    ({ content }) => content,
-    (content) =>
-      content.getContent({
-        contentId: Number(id),
-      }),
-  );
+  if (!canViewPublishedContent(session)) {
+    forbidden();
+  }
+
+  if (!hasContentPublishedServiceToken()) {
+    return fetchProtectedOpenApi(
+      returnTo,
+      ({ content }) => content,
+      (content) =>
+        content.getContent({
+          contentId: Number(id),
+        }),
+    );
+  }
+
+  return unsafeGetCachedPublishedContentDetailAfterAuthorization(id);
 }
 
 export async function getManagedContentSummariesForRequest(): Promise<
@@ -44,9 +69,13 @@ export async function getManagedContentSummariesForRequest(): Promise<
     forbidden();
   }
 
-  return fetchProtectedOpenApi(
-    "/manage/content",
-    ({ content }) => content,
-    (content) => content.getContents({ includeAll: true }),
-  );
+  if (!hasContentManagementServiceToken()) {
+    return fetchProtectedOpenApi(
+      "/manage/content",
+      ({ content }) => content,
+      (content) => content.getContents({ includeAll: true }),
+    );
+  }
+
+  return unsafeGetCachedManagedContentSummariesAfterAuthorization();
 }

@@ -2,6 +2,7 @@ package com.example.springsecuritynotebook.auth.security;
 
 import com.example.springsecuritynotebook.auth.application.AccessTokenBlocklist;
 import com.example.springsecuritynotebook.auth.application.AccessTokenClaims;
+import com.example.springsecuritynotebook.auth.application.ContentServiceTokenAuthenticationService;
 import com.example.springsecuritynotebook.auth.application.JwtService;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
@@ -38,12 +39,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           "/v3/api-docs/**");
 
   private final JwtService jwtService;
+  private final ContentServiceTokenAuthenticationService contentServiceTokenAuthenticationService;
   private final AccessTokenBlocklist accessTokenBlocklist;
   private final ObjectMapper objectMapper;
 
   public JwtAuthenticationFilter(
-      JwtService jwtService, AccessTokenBlocklist accessTokenBlocklist, ObjectMapper objectMapper) {
+      JwtService jwtService,
+      ContentServiceTokenAuthenticationService contentServiceTokenAuthenticationService,
+      AccessTokenBlocklist accessTokenBlocklist,
+      ObjectMapper objectMapper) {
     this.jwtService = jwtService;
+    this.contentServiceTokenAuthenticationService = contentServiceTokenAuthenticationService;
     this.accessTokenBlocklist = accessTokenBlocklist;
     this.objectMapper = objectMapper;
   }
@@ -76,6 +82,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     String token = authorizationHeader.substring(7);
+    if (isContentReadRequest(request)) {
+      var serviceTokenAuthentication = contentServiceTokenAuthenticationService.authenticate(token);
+      if (serviceTokenAuthentication.isPresent()) {
+        SecurityContextHolder.getContext().setAuthentication(serviceTokenAuthentication.get());
+        filterChain.doFilter(request, response);
+        return;
+      }
+    }
+
     if (accessTokenBlocklist.isRevoked(token)) {
       writeAccessTokenError(response);
       return;
@@ -105,5 +120,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     objectMapper.writeValue(
         response.getWriter(),
         ErrorResponse.of("ERROR_ACCESS_TOKEN", AuthErrorMessages.getMessage("ERROR_ACCESS_TOKEN")));
+  }
+
+  private boolean isContentReadRequest(HttpServletRequest request) {
+    return "GET".equalsIgnoreCase(request.getMethod())
+        && PATH_MATCHER.match("/api/content/**", request.getRequestURI());
   }
 }

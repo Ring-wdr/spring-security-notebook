@@ -6,3 +6,7 @@ spring:
 app:
   jwt:
     secret: test-only-secret-key-with-32-characters
+  service-tokens:
+    content:
+      published: test-published-content-service-token
+      management: test-management-content-service-token

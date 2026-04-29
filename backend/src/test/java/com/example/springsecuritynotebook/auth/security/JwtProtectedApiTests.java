@@ -47,6 +47,8 @@ class JwtProtectedApiTests {
   private String userToken;
   private String adminToken;
   private String managerToken;
+  private final String publishedServiceToken = "test-published-content-service-token";
+  private final String managementServiceToken = "test-management-content-service-token";
 
   @BeforeEach
   void setUp() throws Exception {
@@ -159,6 +161,119 @@ class JwtProtectedApiTests {
         .andExpect(status().isOk())
         .andExpect(
             jsonPath("$[?(@.title == 'Draft Content' && @.published == false)]").isNotEmpty());
+  }
+
+  @Test
+  void publishedServiceTokenCanReadOnlyPublishedContent() throws Exception {
+    contentRepository.saveAndFlush(
+        Content.builder()
+            .title("Service Hidden Draft")
+            .body("draft")
+            .category("draft")
+            .published(false)
+            .build());
+
+    mockMvc
+        .perform(
+            get("/api/content")
+                .queryParam("includeAll", "true")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + publishedServiceToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[?(@.title == 'Protected Content')]").isNotEmpty())
+        .andExpect(jsonPath("$[?(@.published == false)]").isEmpty());
+  }
+
+  @Test
+  void publishedServiceTokenCannotReadDraftContentDetail() throws Exception {
+    Content draft =
+        contentRepository.saveAndFlush(
+            Content.builder()
+                .title("Service Hidden Draft Detail")
+                .body("draft")
+                .category("draft")
+                .published(false)
+                .build());
+
+    mockMvc
+        .perform(
+            get("/api/content/{contentId}", draft.getId())
+                .queryParam("includeAll", "true")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + publishedServiceToken))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.error").value("ERROR_CONTENT_NOT_FOUND"));
+  }
+
+  @Test
+  void managementServiceTokenCanReadDraftContent() throws Exception {
+    contentRepository.saveAndFlush(
+        Content.builder()
+            .title("Service Visible Draft")
+            .body("draft")
+            .category("draft")
+            .published(false)
+            .build());
+
+    mockMvc
+        .perform(
+            get("/api/content")
+                .queryParam("includeAll", "true")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managementServiceToken))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$[?(@.title == 'Service Visible Draft' && @.published == false)]")
+                .isNotEmpty());
+  }
+
+  @Test
+  void managementServiceTokenCanReadDraftContentDetail() throws Exception {
+    Content draft =
+        contentRepository.saveAndFlush(
+            Content.builder()
+                .title("Service Visible Draft Detail")
+                .body("draft")
+                .category("draft")
+                .published(false)
+                .build());
+
+    mockMvc
+        .perform(
+            get("/api/content/{contentId}", draft.getId())
+                .queryParam("includeAll", "true")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managementServiceToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.title").value("Service Visible Draft Detail"))
+        .andExpect(jsonPath("$.published").value(false));
+  }
+
+  @Test
+  void managementServiceTokenDoesNotAuthenticateForContentWrites() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managementServiceToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "Service Write",
+                      "body": "service tokens are read-only",
+                      "category": "security",
+                      "published": true
+                    }
+                    """))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
+  }
+
+  @Test
+  void serviceTokenDoesNotAuthenticateOutsideContentReadEndpoints() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/users/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managementServiceToken))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"));
   }
 
   @Test

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AuthenticatedSession } from "@/lib/types";
 
-import { canManageContent } from "./permissions";
+import { canManageContent, canViewPublishedContent } from "./permissions";
 
 vi.mock("server-only", () => ({}));
 
@@ -23,6 +23,31 @@ const baseSession: AuthenticatedSession = {
 };
 
 describe("content permissions", () => {
+  it("allows known reader roles to view published content", () => {
+    expect(canViewPublishedContent(baseSession)).toBe(true);
+    expect(
+      canViewPublishedContent({
+        ...baseSession,
+        user: { ...baseSession.user, roleNames: ["ROLE_MANAGER"] },
+      }),
+    ).toBe(true);
+    expect(
+      canViewPublishedContent({
+        ...baseSession,
+        user: { ...baseSession.user, roleNames: ["ROLE_ADMIN"] },
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects sessions without a content reader role", () => {
+    expect(
+      canViewPublishedContent({
+        ...baseSession,
+        user: { ...baseSession.user, roleNames: ["ROLE_AUTH_ONLY"] },
+      }),
+    ).toBe(false);
+  });
+
   it("allows managers and admins to manage content", () => {
     expect(
       canManageContent({

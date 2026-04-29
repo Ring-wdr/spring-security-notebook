@@ -28,6 +28,26 @@ export function getPublishedContentDetailResponse(id: string) {
   });
 }
 
+export function getManagedContentSummariesResponse() {
+  return executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    operation: (content) => content.getContents({ includeAll: true }),
+    requiredRoles: CONTENT_MANAGER_ROLES,
+  });
+}
+
+export function getManagedContentDetailResponse(id: string) {
+  return executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.getContent({
+        contentId: Number(id),
+        includeAll: true,
+      }),
+    requiredRoles: CONTENT_MANAGER_ROLES,
+  });
+}
+
 export function createManagedContentResponse(request: Request) {
   return executeRouteOpenApiRequest<
     BackendOpenApiClients["content"],
