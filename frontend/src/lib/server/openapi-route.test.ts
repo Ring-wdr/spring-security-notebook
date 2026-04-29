@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
 
 import { executeRouteOpenApiRequest } from "./openapi-route";
 import type { TokenPairResponse } from "../types";
+import { server } from "@/test/msw/server";
 
 const cookieStore = vi.hoisted(() => ({
   value: "",
@@ -65,5 +67,60 @@ describe("executeRouteOpenApiRequest", () => {
     });
     expect(response.status).toBe(400);
     expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the session lacks a required route role", async () => {
+    cookieStore.value = JSON.stringify(TOKENS);
+    cookieStore.get.mockReturnValue({ value: cookieStore.value });
+    const operation = vi.fn(async () => []);
+    server.use(
+      http.get("http://localhost:8080/api/users/me", () =>
+        HttpResponse.json({
+          id: 1,
+          email: "user@example.com",
+          nickname: "user",
+          roleNames: ["ROLE_USER"],
+        }),
+      ),
+    );
+
+    const response = await executeRouteOpenApiRequest({
+      createApi: (clients) => clients.content,
+      operation,
+      requiredRoles: ["ROLE_MANAGER", "ROLE_ADMIN"],
+    });
+
+    await expect(response.json()).resolves.toEqual({
+      error: "ERROR_ACCESS_DENIED",
+      message: "You do not have permission.",
+    });
+    expect(response.status).toBe(403);
+    expect(operation).not.toHaveBeenCalled();
+  });
+
+  it("runs the route operation when the session includes a required role", async () => {
+    cookieStore.value = JSON.stringify(TOKENS);
+    cookieStore.get.mockReturnValue({ value: cookieStore.value });
+    const operation = vi.fn(async () => []);
+    server.use(
+      http.get("http://localhost:8080/api/users/me", () =>
+        HttpResponse.json({
+          id: 2,
+          email: "manager@example.com",
+          nickname: "manager",
+          roleNames: ["ROLE_MANAGER"],
+        }),
+      ),
+    );
+
+    const response = await executeRouteOpenApiRequest({
+      createApi: (clients) => clients.content,
+      operation,
+      requiredRoles: ["ROLE_MANAGER", "ROLE_ADMIN"],
+    });
+
+    await expect(response.json()).resolves.toEqual([]);
+    expect(response.status).toBe(200);
+    expect(operation).toHaveBeenCalledOnce();
   });
 });
