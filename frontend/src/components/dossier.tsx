@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { useId, type ReactNode } from "react";
 
@@ -72,7 +73,7 @@ export function ActionTile({
   title,
   body,
 }: {
-  href: string;
+  href: Route;
   title: string;
   body: string;
 }) {

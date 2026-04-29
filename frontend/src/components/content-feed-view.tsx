@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 
 import { DossierSection, DossierSurface } from "@/components/dossier";
@@ -40,7 +41,7 @@ export function ContentFeedView({ items }: ContentFeedViewProps) {
                   </div>
                 </div>
                 <Link
-                  href={`/content/${item.id}`}
+                  href={`/content/${item.id}` as Route}
                   className="button-secondary shrink-0"
                 >
                   {item.title}

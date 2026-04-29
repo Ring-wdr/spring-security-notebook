@@ -4,7 +4,7 @@ import { executeRouteOpenApiRequest } from "@/lib/server/openapi-route";
 
 export async function PATCH(
   request: Request,
-  context: { params: Promise<{ email: string }> },
+  context: RouteContext<"/api/admin/users/[email]/role">,
 ) {
   const { email } = await context.params;
   return executeRouteOpenApiRequest({

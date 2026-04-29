@@ -4,11 +4,9 @@ import { ContentDetailWorkspace } from "@/components/content-detail-workspace";
 import { GuardPanel } from "@/components/guard-panel";
 import { getContentDetailForRequest } from "@/lib/server/content/content-dal";
 
-export default function ContentDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+type ContentDetailPageProps = PageProps<"/content/[id]">;
+
+export default function ContentDetailPage({ params }: ContentDetailPageProps) {
   return (
     <Suspense
       fallback={
@@ -27,7 +25,7 @@ export default function ContentDetailPage({
 async function ContentDetailSection({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: ContentDetailPageProps["params"];
 }) {
   const { id } = await params;
   const item = await getContentDetailForRequest(id, `/content/${id}`);

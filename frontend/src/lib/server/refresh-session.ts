@@ -1,3 +1,5 @@
+import type { Route } from "next";
+
 const REFRESH_SESSION_PATH = "/auth/refresh-session";
 const DEFAULT_RETURN_TO = "/me";
 
@@ -16,8 +18,8 @@ export function sanitizeReturnTo(returnTo: string | null | undefined): string {
 
 export function buildRefreshSessionRedirectPath(
   returnTo: string | null | undefined,
-): string {
+): Route {
   return `${REFRESH_SESSION_PATH}?returnTo=${encodeURIComponent(
     sanitizeReturnTo(returnTo),
-  )}`;
+  )}` as Route;
 }

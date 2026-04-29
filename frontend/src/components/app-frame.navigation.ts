@@ -1,14 +1,20 @@
+import type { Route } from "next";
+
 import type { StoredSession } from "@/lib/types";
 
 export type NavigationItem = {
-  href: string;
+  href: Route;
   label: string;
+};
+
+type NavigationConfigItem = NavigationItem & {
+  visible: boolean;
 };
 
 export function getNavigationItems(session: StoredSession | null): NavigationItem[] {
   const roleNames = session?.user?.roleNames ?? [];
 
-  return [
+  const items: NavigationConfigItem[] = [
     { href: "/", label: "Overview", visible: true },
     { href: "/learn", label: "Learn", visible: true },
     { href: "/login", label: "Login", visible: !session },
@@ -26,5 +32,7 @@ export function getNavigationItems(session: StoredSession | null): NavigationIte
       label: "Manage Users",
       visible: roleNames.includes("ROLE_ADMIN"),
     },
-  ].filter((item) => item.visible);
+  ];
+
+  return items.filter((item) => item.visible);
 }
