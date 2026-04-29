@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import type { ContentDetail, ContentSummary } from "../types";
-import { executeBackendRequest } from "./backend-auth";
+import { executeOpenApiRequest } from "./openapi-client";
 import { getApiBaseUrl } from "./session";
 
 export const CONTENT_CACHE_TAG = "content";
@@ -22,10 +22,11 @@ export async function getCachedContentSummaries(
   cacheLife(CONTENT_CACHE_LIFE);
   cacheTag(CONTENT_CACHE_TAG, CONTENT_PUBLISHED_CACHE_TAG);
 
-  return executeBackendRequest<ContentSummary[]>({
+  return executeOpenApiRequest({
     baseUrl: getApiBaseUrl(),
-    path: "/api/content",
     tokens: { accessToken },
+    createApi: ({ content }) => content,
+    operation: (content) => content.getContents({}),
     skipRefresh: true,
   });
 }
@@ -37,10 +38,11 @@ export async function getCachedManagedContentSummaries(
   cacheLife(CONTENT_CACHE_LIFE);
   cacheTag(CONTENT_CACHE_TAG, CONTENT_MANAGEMENT_CACHE_TAG);
 
-  return executeBackendRequest<ContentSummary[]>({
+  return executeOpenApiRequest({
     baseUrl: getApiBaseUrl(),
-    path: "/api/content?includeAll=true",
     tokens: { accessToken },
+    createApi: ({ content }) => content,
+    operation: (content) => content.getContents({ includeAll: true }),
     skipRefresh: true,
   });
 }
@@ -53,10 +55,14 @@ export async function getCachedContentDetail(
   cacheLife(CONTENT_CACHE_LIFE);
   cacheTag(CONTENT_CACHE_TAG, `${CONTENT_DETAIL_CACHE_TAG_PREFIX}:${id}`);
 
-  return executeBackendRequest<ContentDetail>({
+  return executeOpenApiRequest({
     baseUrl: getApiBaseUrl(),
-    path: `/api/content/${id}`,
     tokens: { accessToken },
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.getContent({
+        contentId: Number(id),
+      }),
     skipRefresh: true,
   });
 }

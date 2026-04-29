@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { executeBackendRequest } from "../../../lib/server/backend-auth";
+import { executeOpenApiRequest } from "../../../lib/server/openapi-client";
 import {
   buildRefreshSessionRedirectPath,
   sanitizeReturnTo,
@@ -30,10 +30,11 @@ export async function GET(request: Request) {
   let nextTokens = tokens;
 
   try {
-    await executeBackendRequest({
+    await executeOpenApiRequest({
       baseUrl: API_BASE_URL,
-      path: "/api/users/me",
       tokens,
+      createApi: ({ user }) => user,
+      operation: (user) => user.getCurrentUser(),
       onTokensRotated(rotatedTokens) {
         nextTokens = rotatedTokens;
       },

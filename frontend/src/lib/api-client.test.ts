@@ -1,21 +1,25 @@
-import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { describe, expect, it } from "vitest";
 
 import { ApiClientError, apiRequest, backendApi } from "./api-client";
+import { server } from "@/test/msw/server";
 
 describe("apiRequest", () => {
   it("uses generated OpenAPI client methods for typed endpoint requests", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        Response.json([
+    const requests: URL[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/content", ({ request }) => {
+        requests.push(new URL(request.url));
+        return HttpResponse.json([
           {
             id: 1,
             title: "JWT filter chain",
             category: "security",
             published: true,
           },
-        ]),
-      );
+        ]);
+      }),
+    );
 
     const response = await apiRequest(() =>
       backendApi.content.getContents({ includeAll: true }),
@@ -29,29 +33,25 @@ describe("apiRequest", () => {
         published: true,
       },
     ]);
-    expect(fetchMock).toHaveBeenCalledWith("/api/content?includeAll=true", {
-      body: undefined,
-      cache: "no-store",
-      credentials: undefined,
-      headers: {},
-      method: "GET",
-    });
-
-    fetchMock.mockRestore();
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.pathname).toBe("/api/content");
+    expect(requests[0]?.searchParams.get("includeAll")).toBe("true");
   });
 
   it("uses generated form login requests for the Spring Security login endpoint", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        Response.json({
+    const bodies: URLSearchParams[] = [];
+    server.use(
+      http.post("http://localhost:3000/api/auth/login", async ({ request }) => {
+        bodies.push(new URLSearchParams(await request.text()));
+        return HttpResponse.json({
           grantType: "Bearer",
           accessToken: "access-token",
           refreshToken: "refresh-token",
           accessTokenExpiresIn: 600,
           refreshTokenExpiresIn: 86400,
-        }),
-      );
+        });
+      }),
+    );
 
     const response = await apiRequest(() =>
       backendApi.auth.login({
@@ -60,38 +60,26 @@ describe("apiRequest", () => {
       }),
     );
 
-    const [, init] = fetchMock.mock.calls[0];
-
     expect(response.accessToken).toBe("access-token");
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/login");
-    expect(init).toMatchObject({
-      cache: "no-store",
-      method: "POST",
-    });
-    expect(init?.body).toBeInstanceOf(URLSearchParams);
-    expect((init?.body as URLSearchParams).get("email")).toBe(
-      "manager@example.com",
-    );
-    expect((init?.body as URLSearchParams).get("password")).toBe("1111");
-
-    fetchMock.mockRestore();
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]?.get("email")).toBe("manager@example.com");
+    expect(bodies[0]?.get("password")).toBe("1111");
   });
 
   it("throws a structured client error with backend code and message", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
+    server.use(
+      http.get("http://localhost:3000/api/content", () =>
+        HttpResponse.json(
+          {
             error: "ERROR_ACCESS_TOKEN",
             message: "Access token is invalid or expired.",
-          }),
+          },
           {
             status: 401,
-            headers: { "Content-Type": "application/json" },
           },
         ),
-      );
+      ),
+    );
 
     await expect(
       apiRequest(() => backendApi.content.getContents({})),
@@ -101,7 +89,5 @@ describe("apiRequest", () => {
       displayMessage: "Access token is invalid or expired.",
       status: 401,
     } satisfies Partial<ApiClientError>);
-
-    fetchMock.mockRestore();
   });
 });

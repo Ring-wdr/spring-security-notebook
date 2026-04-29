@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { ContentDetailWorkspace } from "@/components/content-detail-workspace";
 import { GuardPanel } from "@/components/guard-panel";
-import { BackendRequestError } from "@/lib/server/backend-auth";
+import { BackendRequestError } from "@/lib/server/openapi-client";
 import { getCachedContentDetail } from "@/lib/server/content-cache";
 import { buildRefreshSessionRedirectPath } from "@/lib/server/refresh-session";
 import { requireSession } from "@/lib/server/session";

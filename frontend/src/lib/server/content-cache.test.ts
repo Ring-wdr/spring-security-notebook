@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
 
 import {
   CONTENT_CACHE_TAG,
@@ -9,23 +10,29 @@ import {
   getCachedContentSummaries,
   getCachedManagedContentSummaries,
 } from "./content-cache";
-import { executeBackendRequest } from "./backend-auth";
 import { cacheLife, cacheTag } from "next/cache";
+import { server } from "@/test/msw/server";
 
 vi.mock("next/cache", () => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
 }));
 
-vi.mock("./backend-auth", () => ({
-  executeBackendRequest: vi.fn(),
-}));
-
 describe("content cache helpers", () => {
   it("tags and fetches the published content feed through a cached scope", async () => {
-    vi.mocked(executeBackendRequest).mockResolvedValueOnce([
-      { id: 7, title: "JWT basics", category: "SECURITY", published: true },
-    ]);
+    const requests: Array<{ authorization: string | null; includeAll: string | null }> = [];
+    server.use(
+      http.get("http://localhost:8080/api/content", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push({
+          authorization: request.headers.get("Authorization"),
+          includeAll: url.searchParams.get("includeAll"),
+        });
+        return HttpResponse.json([
+          { id: 7, title: "JWT basics", category: "SECURITY", published: true },
+        ]);
+      }),
+    );
 
     const result = await getCachedContentSummaries("access-token");
 
@@ -39,16 +46,26 @@ describe("content cache helpers", () => {
       CONTENT_CACHE_TAG,
       CONTENT_PUBLISHED_CACHE_TAG,
     );
-    expect(executeBackendRequest).toHaveBeenCalledWith({
-      baseUrl: "http://localhost:8080",
-      path: "/api/content",
-      tokens: { accessToken: "access-token" },
-      skipRefresh: true,
-    });
+    expect(requests).toEqual([
+      {
+        authorization: "Bearer access-token",
+        includeAll: null,
+      },
+    ]);
   });
 
   it("separates the manager content feed under its own tag", async () => {
-    vi.mocked(executeBackendRequest).mockResolvedValueOnce([]);
+    const requests: Array<{ authorization: string | null; includeAll: string | null }> = [];
+    server.use(
+      http.get("http://localhost:8080/api/content", ({ request }) => {
+        const url = new URL(request.url);
+        requests.push({
+          authorization: request.headers.get("Authorization"),
+          includeAll: url.searchParams.get("includeAll"),
+        });
+        return HttpResponse.json([]);
+      }),
+    );
 
     await getCachedManagedContentSummaries("access-token");
 
@@ -56,22 +73,28 @@ describe("content cache helpers", () => {
       CONTENT_CACHE_TAG,
       CONTENT_MANAGEMENT_CACHE_TAG,
     );
-    expect(executeBackendRequest).toHaveBeenCalledWith({
-      baseUrl: "http://localhost:8080",
-      path: "/api/content?includeAll=true",
-      tokens: { accessToken: "access-token" },
-      skipRefresh: true,
-    });
+    expect(requests).toEqual([
+      {
+        authorization: "Bearer access-token",
+        includeAll: "true",
+      },
+    ]);
   });
 
   it("tags content detail entries by id", async () => {
-    vi.mocked(executeBackendRequest).mockResolvedValueOnce({
-      id: 42,
-      title: "Filter chain",
-      category: "SECURITY",
-      published: true,
-      body: "Details",
-    });
+    const authorizations: Array<string | null> = [];
+    server.use(
+      http.get("http://localhost:8080/api/content/42", ({ request }) => {
+        authorizations.push(request.headers.get("Authorization"));
+        return HttpResponse.json({
+          id: 42,
+          title: "Filter chain",
+          category: "SECURITY",
+          published: true,
+          body: "Details",
+        });
+      }),
+    );
 
     await getCachedContentDetail("access-token", "42");
 
@@ -79,11 +102,6 @@ describe("content cache helpers", () => {
       CONTENT_CACHE_TAG,
       `${CONTENT_DETAIL_CACHE_TAG_PREFIX}:42`,
     );
-    expect(executeBackendRequest).toHaveBeenCalledWith({
-      baseUrl: "http://localhost:8080",
-      path: "/api/content/42",
-      tokens: { accessToken: "access-token" },
-      skipRefresh: true,
-    });
+    expect(authorizations).toEqual(["Bearer access-token"]);
   });
 });

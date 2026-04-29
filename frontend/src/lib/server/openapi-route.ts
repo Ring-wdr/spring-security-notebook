@@ -2,14 +2,28 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { createDisplayError } from "../auth-errors";
-import { BackendRequestError, executeBackendRequest } from "./backend-auth";
-import { clearSessionCookie, readSessionCookie, writeSessionCookie } from "./session-cookie";
+import type { TokenPairResponse } from "../types";
+import type { BackendOpenApiClients } from "./openapi-client";
+import {
+  BackendRequestError,
+  executeOpenApiRequest,
+} from "./openapi-client";
+import {
+  clearSessionCookie,
+  readSessionCookie,
+  writeSessionCookie,
+} from "./session-cookie";
 import { getApiBaseUrl } from "./session";
 
-export async function proxyJsonRequest<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<NextResponse> {
+type ExecuteRouteOpenApiRequestOptions<TApi, TResult> = {
+  createApi: (clients: BackendOpenApiClients) => TApi;
+  operation: (api: TApi) => Promise<TResult>;
+};
+
+export async function executeRouteOpenApiRequest<TApi, TResult>({
+  createApi,
+  operation,
+}: ExecuteRouteOpenApiRequestOptions<TApi, TResult>): Promise<NextResponse> {
   const cookieStore = await cookies();
   const tokens = readSessionCookie(cookieStore);
 
@@ -23,15 +37,15 @@ export async function proxyJsonRequest<T>(
     return response;
   }
 
-  let nextTokens = tokens;
+  let nextTokens: TokenPairResponse = tokens;
   let shouldClearSession = false;
 
   try {
-    const data = await executeBackendRequest<T>({
+    const data = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
-      path,
-      init,
       tokens,
+      createApi,
+      operation,
       onTokensRotated(rotatedTokens) {
         nextTokens = rotatedTokens;
       },

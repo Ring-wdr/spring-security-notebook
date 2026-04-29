@@ -1,10 +1,11 @@
 import { revalidateTag } from "next/cache";
+import type { ContentUpsertRequest } from "@/generated/openapi/src/models";
 
 import {
   CONTENT_CACHE_TAG,
   CONTENT_DETAIL_CACHE_TAG_PREFIX,
 } from "@/lib/server/content-cache";
-import { proxyJsonRequest } from "@/lib/server/proxy-json";
+import { executeRouteOpenApiRequest } from "@/lib/server/openapi-route";
 
 export async function GET(
   request: Request,
@@ -12,7 +13,14 @@ export async function GET(
 ) {
   const { id } = await context.params;
   const url = new URL(request.url);
-  return proxyJsonRequest(`/api/content/${id}${url.search}`);
+  return executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.getContent({
+        contentId: Number(id),
+        includeAll: url.searchParams.get("includeAll") === "true" || undefined,
+      }),
+  });
 }
 
 export async function PUT(
@@ -20,12 +28,14 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const response = await proxyJsonRequest(`/api/content/${id}`, {
-    method: "PUT",
-    body: await request.text(),
-    headers: {
-      "Content-Type": request.headers.get("content-type") ?? "application/json",
-    },
+  const contentUpsertRequest = (await request.json()) as ContentUpsertRequest;
+  const response = await executeRouteOpenApiRequest({
+    createApi: ({ content }) => content,
+    operation: (content) =>
+      content.updateContent({
+        contentId: Number(id),
+        contentUpsertRequest,
+      }),
   });
 
   if (response.ok) {

@@ -2,8 +2,7 @@ import { Suspense } from "react";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageUsersClient } from "@/components/manage-users-client";
-import { fetchProtectedJson, hasAnyRole, requireSession } from "@/lib/server/session";
-import type { SubscriberSummary } from "@/lib/types";
+import { fetchProtectedOpenApi, hasAnyRole, requireSession } from "@/lib/server/session";
 
 export default function ManageUsersPage() {
   return (
@@ -33,9 +32,10 @@ async function ManageUsersWorkspace() {
     );
   }
 
-  const users = await fetchProtectedJson<SubscriberSummary[]>(
-    "/api/admin/users",
+  const users = await fetchProtectedOpenApi(
     "/manage/users",
+    ({ adminSubscribers }) => adminSubscribers,
+    (adminSubscribers) => adminSubscribers.getSubscribers(),
   );
   return <ManageUsersClient initialUsers={users} />;
 }
