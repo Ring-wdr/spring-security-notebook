@@ -54,15 +54,6 @@ public class AuthService {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
-    String storedRefreshToken =
-        refreshTokenStore
-            .get(email)
-            .orElseThrow(() -> new CustomJwtException("ERROR_REFRESH_TOKEN"));
-
-    if (!storedRefreshToken.equals(request.refreshToken())) {
-      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
-    }
-
     Subscriber subscriber =
         subscriberUserLookup
             .findByEmail(email)
@@ -75,7 +66,10 @@ public class AuthService {
     String refreshTokenValue =
         jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
     long refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
-    refreshTokenStore.store(email, refreshTokenValue, refreshTokenExpiresIn);
+    if (!refreshTokenStore.rotateIfMatches(
+        email, request.refreshToken(), refreshTokenValue, refreshTokenExpiresIn)) {
+      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+    }
 
     return new TokenPairResponse(
         "Bearer",
