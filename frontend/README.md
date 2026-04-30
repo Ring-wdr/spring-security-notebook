@@ -47,6 +47,9 @@ frontend/
 - 환경변수 예시는 `frontend/.env.example`에 둡니다.
 - `NEXT_PUBLIC_API_BASE_URL`은 필수이며 T3 Env가 URL 형식까지 검증합니다.
 - `CONTENT_PUBLISHED_SERVICE_TOKEN`, `CONTENT_MANAGEMENT_SERVICE_TOKEN`은 선택값입니다. 값이 없으면 현재 사용자 세션 토큰으로 backend API를 호출하고, 값이 있으면 최소 32자 이상이어야 캐시된 content fetch에 사용됩니다.
+- 두 값은 server-only 환경변수입니다. `NEXT_PUBLIC_*`로 노출하거나 UI, props, 로그, cache key에 포함하지 않습니다.
+- service token 캐시 경로는 먼저 사용자 session과 role 권한을 확인한 뒤에만 사용합니다. 토큰은 캐시 가능한 backend fetch credential이지 사용자 인가를 대체하지 않습니다.
+- 운영형 환경에서는 backend의 `APP_CONTENT_*` 값과 frontend의 `CONTENT_*` 값을 함께 회전하고, backend ingress/VPC/API gateway에서 frontend 서버만 service-token 요청을 보낼 수 있게 제한합니다.
 
 ## Notes
 
