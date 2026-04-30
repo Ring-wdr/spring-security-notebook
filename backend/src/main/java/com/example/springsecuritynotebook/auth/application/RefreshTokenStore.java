@@ -3,6 +3,7 @@ package com.example.springsecuritynotebook.auth.application;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,6 +24,9 @@ public class RefreshTokenStore {
           redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
           redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[4])
           redis.call('SET', KEYS[3], 'used', 'EX', ARGV[3])
+          redis.call('SET', KEYS[4], ARGV[5], 'EX', ARGV[3])
+          redis.call('SADD', KEYS[5], ARGV[5])
+          redis.call('EXPIRE', KEYS[5], ARGV[3])
           return 1
           """,
           Long.class);
@@ -40,12 +44,15 @@ public class RefreshTokenStore {
   public void store(String email, String familyId, String refreshToken, long expiresInSeconds) {
     runTokenStateOperation(
         () -> {
+          deleteTrackedFamilies(email);
           stringRedisTemplate
               .opsForValue()
               .set(buildKey(email, familyId), refreshToken, Duration.ofSeconds(expiresInSeconds));
           stringRedisTemplate
               .opsForValue()
               .set(buildFamilyKey(email), familyId, Duration.ofSeconds(expiresInSeconds));
+          stringRedisTemplate.opsForSet().add(buildFamiliesKey(email), familyId);
+          stringRedisTemplate.expire(buildFamiliesKey(email), Duration.ofSeconds(expiresInSeconds));
         });
   }
 
@@ -98,11 +105,14 @@ public class RefreshTokenStore {
                   List.of(
                       buildKey(email, familyId),
                       buildRetryKey(email, familyId, expectedRefreshToken),
-                      buildUsedKey(email, familyId, expectedRefreshToken)),
+                      buildUsedKey(email, familyId, expectedRefreshToken),
+                      buildFamilyKey(email),
+                      buildFamiliesKey(email)),
                   expectedRefreshToken,
                   newRefreshToken,
                   String.valueOf(expiresInSeconds),
-                  String.valueOf(RETRY_GRACE_SECONDS));
+                  String.valueOf(RETRY_GRACE_SECONDS),
+                  familyId);
           return Long.valueOf(1L).equals(result);
         });
   }
@@ -138,21 +148,14 @@ public class RefreshTokenStore {
   }
 
   public void invalidate(String email) {
-    runTokenStateOperation(
-        () -> {
-          String familyId = stringRedisTemplate.opsForValue().get(buildFamilyKey(email));
-          if (familyId != null) {
-            stringRedisTemplate.delete(buildKey(email, familyId));
-          }
-          stringRedisTemplate.delete(buildFamilyKey(email));
-          stringRedisTemplate.delete(buildKey(email));
-        });
+    runTokenStateOperation(() -> deleteTrackedFamilies(email));
   }
 
   public void invalidateFamily(String email, String familyId) {
     runTokenStateOperation(
         () -> {
           stringRedisTemplate.delete(buildKey(email, familyId));
+          stringRedisTemplate.opsForSet().remove(buildFamiliesKey(email), familyId);
           String currentFamilyId = stringRedisTemplate.opsForValue().get(buildFamilyKey(email));
           if (familyId.equals(currentFamilyId)) {
             stringRedisTemplate.delete(buildFamilyKey(email));
@@ -172,12 +175,32 @@ public class RefreshTokenStore {
     return "auth:refresh-family:" + email;
   }
 
+  private String buildFamiliesKey(String email) {
+    return "auth:refresh-families:" + email;
+  }
+
   private String buildRetryKey(String email, String familyId, String refreshToken) {
     return "auth:refresh:retry:" + email + ":" + familyId + ":" + refreshToken;
   }
 
   private String buildUsedKey(String email, String familyId, String refreshToken) {
     return "auth:refresh:used:" + email + ":" + familyId + ":" + refreshToken;
+  }
+
+  private void deleteTrackedFamilies(String email) {
+    Set<String> familyIds = stringRedisTemplate.opsForSet().members(buildFamiliesKey(email));
+    if (familyIds != null) {
+      familyIds.forEach(familyId -> stringRedisTemplate.delete(buildKey(email, familyId)));
+    }
+
+    String currentFamilyId = stringRedisTemplate.opsForValue().get(buildFamilyKey(email));
+    if (currentFamilyId != null) {
+      stringRedisTemplate.delete(buildKey(email, currentFamilyId));
+    }
+
+    stringRedisTemplate.delete(buildFamiliesKey(email));
+    stringRedisTemplate.delete(buildFamilyKey(email));
+    stringRedisTemplate.delete(buildKey(email));
   }
 
   private void runTokenStateOperation(Runnable operation) {
