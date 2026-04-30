@@ -16,6 +16,8 @@ import org.springframework.util.StringUtils;
 public class ContentServiceTokenAuthenticationService {
 
   private static final int MIN_TOKEN_LENGTH = 32;
+  private static final String PUBLISHED_SERVICE_PRINCIPAL = "content-published-service";
+  private static final String MANAGEMENT_SERVICE_PRINCIPAL = "content-management-service";
   private static final List<SimpleGrantedAuthority> PUBLISHED_AUTHORITIES =
       List.of(new SimpleGrantedAuthority("CONTENT_READ"));
   private static final List<SimpleGrantedAuthority> MANAGEMENT_AUTHORITIES =
@@ -33,12 +35,12 @@ public class ContentServiceTokenAuthenticationService {
 
   public Optional<Authentication> authenticate(String token) {
     if (matchesConfiguredToken(token, properties.published())) {
-      return Optional.of(createAuthentication("content-published-service", PUBLISHED_AUTHORITIES));
+      return Optional.of(createAuthentication(PUBLISHED_SERVICE_PRINCIPAL, PUBLISHED_AUTHORITIES));
     }
 
     if (matchesConfiguredToken(token, properties.management())) {
       return Optional.of(
-          createAuthentication("content-management-service", MANAGEMENT_AUTHORITIES));
+          createAuthentication(MANAGEMENT_SERVICE_PRINCIPAL, MANAGEMENT_AUTHORITIES));
     }
 
     return Optional.empty();

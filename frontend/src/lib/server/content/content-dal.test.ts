@@ -79,6 +79,26 @@ const managerSession = {
   },
 };
 
+const userSession = {
+  ...managerSession,
+  user: {
+    id: 2,
+    email: "user@example.com",
+    nickname: "user",
+    roleNames: ["ROLE_USER"],
+  },
+};
+
+const noRoleSession = {
+  ...managerSession,
+  user: {
+    id: 3,
+    email: "norole@example.com",
+    nickname: "norole",
+    roleNames: [],
+  },
+};
+
 describe("content DAL", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -120,12 +140,38 @@ describe("content DAL", () => {
     expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
   });
 
+  it("rejects published content before cached service-token fetch when the session lacks read roles", async () => {
+    mockedRequireSession.mockResolvedValue(noRoleSession);
+    mockedHasPublishedToken.mockReturnValue(true);
+
+    await expect(
+      getPublishedContentSummariesForRequest("/content"),
+    ).rejects.toThrow("forbidden");
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedCachedPublishedList).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+  });
+
   it("uses the cached published detail when the service token is configured", async () => {
     mockedHasPublishedToken.mockReturnValue(true);
 
     await getContentDetailForRequest("7", "/content/7");
 
     expect(mockedCachedPublishedDetail).toHaveBeenCalledWith("7");
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+  });
+
+  it("rejects published detail before cached service-token fetch when the session lacks read roles", async () => {
+    mockedRequireSession.mockResolvedValue(noRoleSession);
+    mockedHasPublishedToken.mockReturnValue(true);
+
+    await expect(getContentDetailForRequest("7", "/content/7")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedCachedPublishedDetail).not.toHaveBeenCalled();
     expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
   });
 
@@ -136,6 +182,19 @@ describe("content DAL", () => {
 
     expect(mockedCachedManagedList).not.toHaveBeenCalled();
     expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
+  });
+
+  it("rejects managed content before cached service-token fetch when the session is not a manager", async () => {
+    mockedRequireSession.mockResolvedValue(userSession);
+    mockedHasManagementToken.mockReturnValue(true);
+
+    await expect(getManagedContentSummariesForRequest()).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedCachedManagedList).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
   });
 
   it("uses the cached management detail when the management token is configured", async () => {
@@ -182,6 +241,22 @@ describe("content DAL", () => {
       contentId: 9,
       includeAll: true,
     });
+  });
+
+  it("rejects managed detail before cached service-token fetch when the session is not a manager", async () => {
+    mockedRequireSession.mockResolvedValue(userSession);
+    mockedHasManagementToken.mockReturnValue(true);
+
+    await expect(getManagedContentDetailForRequest("9")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedRequireSession).toHaveBeenCalledWith(
+      "/manage/content?contentId=9",
+    );
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedCachedManagedDetail).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
   });
 
   it("rejects invalid management detail ids before session or backend work", async () => {

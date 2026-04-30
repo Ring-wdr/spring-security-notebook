@@ -293,6 +293,15 @@ flowchart TD
 - 로컬 학습용으로 데모 데이터를 자동 주입하려면 `dev` 프로필로 실행하거나 `APP_BOOTSTRAP_DEMO_DATA_ENABLED=true`를 명시적으로 설정합니다.
 - `application-test.yml`은 테스트 전용 JWT secret을 별도로 사용하므로 `.\mvnw.cmd test` 실행에는 추가 수동 설정이 필요하지 않습니다.
 
+## Service Token Hardening Notes
+
+- Content service tokens are optional server-to-server credentials for cached content reads.
+- They are static bearer credentials in this learning project. If the Next.js server runtime is compromised, assume environment variables and in-memory token values may be exposed.
+- The intended defense is least privilege: service tokens are read-only machine credentials and do not grant subscriber roles or write/admin permissions.
+- Frontend cached content helpers must still check the current user session and role before using a service token for backend fetches.
+- In shared environments, pair token rotation with source restrictions such as ingress, VPC, firewall, security group, or API gateway allowlists.
+- Design details: [2026-04-30-service-token-hardening-design.md](docs/superpowers/specs/2026-04-30-service-token-hardening-design.md)
+
 ## Guide Summary
 
 이 레포의 학습 축은 다음과 같습니다.
