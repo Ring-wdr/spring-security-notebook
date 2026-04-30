@@ -34,6 +34,8 @@ management:
       show-details: always
 
 app:
+  docs:
+    public-enabled: ${APP_DOCS_PUBLIC_ENABLED:true}
   bootstrap:
     demo-data-enabled: ${APP_BOOTSTRAP_DEMO_DATA_ENABLED:false}
   client:

@@ -5,6 +5,8 @@ import com.example.springsecuritynotebook.auth.application.AccessTokenClaims;
 import com.example.springsecuritynotebook.auth.application.ContentServiceTokenAuthenticationService;
 import com.example.springsecuritynotebook.auth.application.JwtService;
 import com.example.springsecuritynotebook.auth.application.SubscriberPrincipal;
+import com.example.springsecuritynotebook.auth.application.TokenStateException;
+import com.example.springsecuritynotebook.auth.config.DocsProperties;
 import com.example.springsecuritynotebook.auth.exception.CustomJwtException;
 import com.example.springsecuritynotebook.auth.handler.AuthErrorMessages;
 import com.example.springsecuritynotebook.auth.handler.ErrorResponse;
@@ -28,29 +30,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
   private static final List<String> SKIPPED_PATH_PATTERNS =
-      List.of(
-          "/api/auth/login",
-          "/api/auth/refresh",
-          "/actuator/health",
-          "/actuator/info",
-          "/swagger-ui.html",
-          "/swagger-ui/**",
-          "/v3/api-docs",
-          "/v3/api-docs/**");
+      List.of("/api/auth/login", "/api/auth/refresh", "/actuator/health", "/actuator/info");
+  private static final List<String> DOCS_PATH_PATTERNS =
+      List.of("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**");
 
   private final JwtService jwtService;
   private final ContentServiceTokenAuthenticationService contentServiceTokenAuthenticationService;
   private final AccessTokenBlocklist accessTokenBlocklist;
+  private final DocsProperties docsProperties;
   private final ObjectMapper objectMapper;
 
   public JwtAuthenticationFilter(
       JwtService jwtService,
       ContentServiceTokenAuthenticationService contentServiceTokenAuthenticationService,
       AccessTokenBlocklist accessTokenBlocklist,
+      DocsProperties docsProperties,
       ObjectMapper objectMapper) {
     this.jwtService = jwtService;
     this.contentServiceTokenAuthenticationService = contentServiceTokenAuthenticationService;
     this.accessTokenBlocklist = accessTokenBlocklist;
+    this.docsProperties = docsProperties;
     this.objectMapper = objectMapper;
   }
 
@@ -62,7 +61,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String requestUri = request.getRequestURI();
     return SKIPPED_PATH_PATTERNS.stream()
-        .anyMatch(pattern -> PATH_MATCHER.match(pattern, requestUri));
+            .anyMatch(pattern -> PATH_MATCHER.match(pattern, requestUri))
+        || (docsProperties.publicEnabled()
+            && DOCS_PATH_PATTERNS.stream()
+                .anyMatch(pattern -> PATH_MATCHER.match(pattern, requestUri)));
   }
 
   @Override
@@ -91,7 +93,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       }
     }
 
-    if (accessTokenBlocklist.isRevoked(token)) {
+    try {
+      if (accessTokenBlocklist.isRevoked(token)) {
+        writeAccessTokenError(response);
+        return;
+      }
+    } catch (TokenStateException exception) {
       writeAccessTokenError(response);
       return;
     }

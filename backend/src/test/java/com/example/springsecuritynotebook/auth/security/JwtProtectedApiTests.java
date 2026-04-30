@@ -1,5 +1,7 @@
 package com.example.springsecuritynotebook.auth.security;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -7,7 +9,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.springsecuritynotebook.auth.application.AccessTokenBlocklist;
 import com.example.springsecuritynotebook.auth.application.TokenPairResponse;
+import com.example.springsecuritynotebook.auth.application.TokenStateException;
 import com.example.springsecuritynotebook.content.domain.Content;
 import com.example.springsecuritynotebook.content.persistence.ContentRepository;
 import com.example.springsecuritynotebook.subscriber.domain.Subscriber;
@@ -21,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -43,6 +48,8 @@ class JwtProtectedApiTests {
 
   @Autowired private ObjectMapper objectMapper;
 
+  @MockitoBean private AccessTokenBlocklist accessTokenBlocklist;
+
   private MockMvc mockMvc;
   private String userToken;
   private String adminToken;
@@ -54,6 +61,7 @@ class JwtProtectedApiTests {
   void setUp() throws Exception {
     mockMvc =
         MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
+    when(accessTokenBlocklist.isRevoked(anyString())).thenReturn(false);
 
     Subscriber user =
         Subscriber.builder()
@@ -138,6 +146,18 @@ class JwtProtectedApiTests {
   void malformedAuthorizationSchemeReturnsAccessTokenErrorJson() throws Exception {
     mockMvc
         .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Token abc"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));
+  }
+
+  @Test
+  void tokenStateFailureReturnsAccessTokenErrorJson() throws Exception {
+    when(accessTokenBlocklist.isRevoked(userToken))
+        .thenThrow(new TokenStateException("unavailable", new RuntimeException("redis")));
+
+    mockMvc
+        .perform(get("/api/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error").value("ERROR_ACCESS_TOKEN"))
         .andExpect(jsonPath("$.message").value("Access token is invalid or expired."));

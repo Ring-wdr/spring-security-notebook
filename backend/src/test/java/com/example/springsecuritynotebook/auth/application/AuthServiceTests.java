@@ -1,6 +1,7 @@
 package com.example.springsecuritynotebook.auth.application;
 
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -71,16 +72,18 @@ class AuthServiceTests {
 
     when(accessTokenBlocklist.isRevoked("access-token")).thenReturn(false);
     when(jwtService.readAccessClaimsAllowExpired("access-token")).thenReturn(accessClaims);
-    when(jwtService.validateRefreshTokenEmail("refresh-token")).thenReturn("user@example.com");
+    when(jwtService.validateRefreshToken("refresh-token"))
+        .thenReturn(new RefreshTokenClaims("user@example.com", "family-1"));
     when(subscriberUserLookup.findByEmail("user@example.com")).thenReturn(Optional.of(subscriber));
     when(jwtService.getAccessTokenExpiresInSeconds()).thenReturn(600L);
     when(jwtService.generateAccessToken(accessClaims, 600L)).thenReturn("new-access-token");
     when(jwtService.getRefreshTokenExpiresInSeconds()).thenReturn(86400L);
-    when(jwtService.generateRefreshToken("user@example.com", 86400L)).thenReturn("new-refresh");
+    when(jwtService.generateRefreshToken("user@example.com", "family-1", 86400L))
+        .thenReturn("new-refresh");
     when(refreshTokenStore.rotateIfMatches(
-            "user@example.com", "refresh-token", "new-refresh", 86400L))
+            "user@example.com", "family-1", "refresh-token", "new-refresh", 86400L))
         .thenReturn(false);
-    when(refreshTokenStore.findRetrySuccessor("user@example.com", "refresh-token"))
+    when(refreshTokenStore.findRetrySuccessor("user@example.com", "family-1", "refresh-token"))
         .thenReturn(Optional.empty());
 
     org.assertj.core.api.Assertions.assertThatThrownBy(
@@ -89,6 +92,7 @@ class AuthServiceTests {
                     "Bearer access-token", new RefreshTokenRequest("refresh-token")))
         .isInstanceOf(CustomJwtException.class)
         .hasMessage("ERROR_REFRESH_TOKEN");
+    verify(refreshTokenStore, never()).invalidateFamily("user@example.com", "family-1");
   }
 
   @Test
@@ -103,18 +107,20 @@ class AuthServiceTests {
 
     when(accessTokenBlocklist.isRevoked("access-token")).thenReturn(false);
     when(jwtService.readAccessClaimsAllowExpired("access-token")).thenReturn(accessClaims);
-    when(jwtService.validateRefreshTokenEmail("refresh-token")).thenReturn("user@example.com");
+    when(jwtService.validateRefreshToken("refresh-token"))
+        .thenReturn(new RefreshTokenClaims("user@example.com", "family-1"));
     when(subscriberUserLookup.findByEmail("user@example.com")).thenReturn(Optional.of(subscriber));
     when(jwtService.getAccessTokenExpiresInSeconds()).thenReturn(600L);
     when(jwtService.generateAccessToken(accessClaims, 600L)).thenReturn("new-access-token");
     when(jwtService.getRefreshTokenExpiresInSeconds()).thenReturn(86400L);
-    when(jwtService.generateRefreshToken("user@example.com", 86400L)).thenReturn("new-refresh");
+    when(jwtService.generateRefreshToken("user@example.com", "family-1", 86400L))
+        .thenReturn("new-refresh");
     when(refreshTokenStore.rotateIfMatches(
-            "user@example.com", "refresh-token", "new-refresh", 86400L))
+            "user@example.com", "family-1", "refresh-token", "new-refresh", 86400L))
         .thenReturn(false);
-    when(refreshTokenStore.findRetrySuccessor("user@example.com", "refresh-token"))
+    when(refreshTokenStore.findRetrySuccessor("user@example.com", "family-1", "refresh-token"))
         .thenReturn(Optional.of("current-refresh-token"));
-    when(refreshTokenStore.getRemainingTtl("user@example.com")).thenReturn(48L);
+    when(refreshTokenStore.getRemainingTtl("user@example.com", "family-1")).thenReturn(48L);
 
     TokenPairResponse response =
         authService.refresh("Bearer access-token", new RefreshTokenRequest("refresh-token"));
@@ -122,5 +128,57 @@ class AuthServiceTests {
     org.assertj.core.api.Assertions.assertThat(response.refreshToken())
         .isEqualTo("current-refresh-token");
     org.assertj.core.api.Assertions.assertThat(response.refreshTokenExpiresIn()).isEqualTo(48L);
+  }
+
+  @Test
+  void refreshInvalidatesFamilyWhenTrackedStaleRefreshTokenIsReused() {
+    AuthService authService =
+        new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist, subscriberUserLookup);
+    AccessTokenClaims accessClaims =
+        new AccessTokenClaims("user@example.com", "user", false, List.of("ROLE_USER"));
+    Subscriber subscriber =
+        Subscriber.builder().email("user@example.com").password("encoded").nickname("user").build();
+    subscriber.addRole(SubscriberRole.ROLE_USER);
+
+    when(accessTokenBlocklist.isRevoked("access-token")).thenReturn(false);
+    when(jwtService.readAccessClaimsAllowExpired("access-token")).thenReturn(accessClaims);
+    when(jwtService.validateRefreshToken("refresh-token"))
+        .thenReturn(new RefreshTokenClaims("user@example.com", "family-1"));
+    when(subscriberUserLookup.findByEmail("user@example.com")).thenReturn(Optional.of(subscriber));
+    when(jwtService.getAccessTokenExpiresInSeconds()).thenReturn(600L);
+    when(jwtService.generateAccessToken(accessClaims, 600L)).thenReturn("new-access-token");
+    when(jwtService.getRefreshTokenExpiresInSeconds()).thenReturn(86400L);
+    when(jwtService.generateRefreshToken("user@example.com", "family-1", 86400L))
+        .thenReturn("new-refresh");
+    when(refreshTokenStore.rotateIfMatches(
+            "user@example.com", "family-1", "refresh-token", "new-refresh", 86400L))
+        .thenReturn(false);
+    when(refreshTokenStore.findRetrySuccessor("user@example.com", "family-1", "refresh-token"))
+        .thenReturn(Optional.empty());
+    when(refreshTokenStore.hasTokenState("user@example.com", "family-1", "refresh-token"))
+        .thenReturn(true);
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                authService.refresh(
+                    "Bearer access-token", new RefreshTokenRequest("refresh-token")))
+        .isInstanceOf(CustomJwtException.class)
+        .hasMessage("ERROR_REFRESH_TOKEN");
+    verify(refreshTokenStore).invalidateFamily("user@example.com", "family-1");
+  }
+
+  @Test
+  void refreshMapsAccessTokenStateFailureToAccessTokenError() {
+    AuthService authService =
+        new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist, subscriberUserLookup);
+    when(accessTokenBlocklist.isRevoked("access-token"))
+        .thenThrow(new TokenStateException("unavailable", new RuntimeException("redis")));
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                authService.refresh(
+                    "Bearer access-token", new RefreshTokenRequest("refresh-token")))
+        .isInstanceOf(CustomJwtException.class)
+        .hasMessage("ERROR_ACCESS_TOKEN");
   }
 }

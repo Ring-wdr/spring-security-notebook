@@ -55,6 +55,25 @@ class JwtServiceTests {
         .hasMessage("ERROR_REFRESH_TOKEN");
   }
 
+  @Test
+  void validateRefreshTokenReturnsEmailAndFamilyId() {
+    String token = jwtService.generateRefreshToken("user@example.com", 60);
+
+    RefreshTokenClaims claims = jwtService.validateRefreshToken(token);
+
+    assertThat(claims.email()).isEqualTo("user@example.com");
+    assertThat(claims.familyId()).isNotBlank();
+  }
+
+  @Test
+  void validateRefreshTokenRejectsTokenWithoutFamilyId() {
+    String token = buildRefreshTokenWithoutFamilyId();
+
+    assertThatThrownBy(() -> jwtService.validateRefreshToken(token))
+        .isInstanceOf(CustomJwtException.class)
+        .hasMessage("ERROR_REFRESH_TOKEN");
+  }
+
   private String buildAccessToken(String issuer, Instant expiration) {
     Instant issuedAt = expiration.minusSeconds(60);
     return Jwts.builder()
@@ -64,6 +83,17 @@ class JwtServiceTests {
                 .toClaimsMap())
         .issuedAt(Date.from(issuedAt))
         .expiration(Date.from(expiration))
+        .signWith(signingKey)
+        .compact();
+  }
+
+  private String buildRefreshTokenWithoutFamilyId() {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .issuer(ISSUER)
+        .claim("email", "user@example.com")
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plusSeconds(60)))
         .signWith(signingKey)
         .compact();
   }

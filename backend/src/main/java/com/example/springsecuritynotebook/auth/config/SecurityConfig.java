@@ -30,6 +30,7 @@ public class SecurityConfig {
   private final ClientProperties clientProperties;
   private final LoginSuccessHandler loginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
+  private final DocsProperties docsProperties;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
   private final ApiAccessDeniedHandler apiAccessDeniedHandler;
@@ -38,12 +39,14 @@ public class SecurityConfig {
       ClientProperties clientProperties,
       LoginSuccessHandler loginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
+      DocsProperties docsProperties,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       ApiAuthenticationEntryPoint apiAuthenticationEntryPoint,
       ApiAccessDeniedHandler apiAccessDeniedHandler) {
     this.clientProperties = clientProperties;
     this.loginSuccessHandler = loginSuccessHandler;
     this.loginFailureHandler = loginFailureHandler;
+    this.docsProperties = docsProperties;
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.apiAuthenticationEntryPoint = apiAuthenticationEntryPoint;
     this.apiAccessDeniedHandler = apiAccessDeniedHandler;
@@ -71,21 +74,24 @@ public class SecurityConfig {
                     .successHandler(loginSuccessHandler)
                     .failureHandler(loginFailureHandler))
         .authorizeHttpRequests(
-            authorize ->
+            authorize -> {
+              authorize.requestMatchers("/actuator/health", "/actuator/info").permitAll();
+              if (docsProperties.publicEnabled()) {
                 authorize
-                    .requestMatchers("/actuator/health", "/actuator/info")
-                    .permitAll()
                     .requestMatchers(
                         "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**")
-                    .permitAll()
-                    .requestMatchers("/api/auth/login")
-                    .permitAll()
-                    .requestMatchers("/api/auth/refresh")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.OPTIONS, "/**")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
+                    .permitAll();
+              }
+              authorize
+                  .requestMatchers("/api/auth/login")
+                  .permitAll()
+                  .requestMatchers("/api/auth/refresh")
+                  .permitAll()
+                  .requestMatchers(HttpMethod.OPTIONS, "/**")
+                  .permitAll()
+                  .anyRequest()
+                  .authenticated();
+            })
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }
