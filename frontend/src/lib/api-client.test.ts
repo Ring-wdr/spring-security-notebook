@@ -8,34 +8,35 @@ describe("apiRequest", () => {
   it("uses generated OpenAPI client methods for typed endpoint requests", async () => {
     const requests: URL[] = [];
     server.use(
-      http.get("http://localhost:3000/api/content", ({ request }) => {
+      http.get("http://localhost:3000/api/admin/users", ({ request }) => {
         requests.push(new URL(request.url));
         return HttpResponse.json([
           {
             id: 1,
-            title: "JWT filter chain",
-            category: "security",
-            published: true,
+            email: "manager@example.com",
+            nickname: "manager",
+            social: false,
+            roleNames: ["ROLE_MANAGER"],
           },
         ]);
       }),
     );
 
     const response = await apiRequest(() =>
-      backendApi.content.getContents({ includeAll: true }),
+      backendApi.adminSubscribers.getSubscribers(),
     );
 
     expect(response).toEqual([
       {
         id: 1,
-        title: "JWT filter chain",
-        category: "security",
-        published: true,
+        email: "manager@example.com",
+        nickname: "manager",
+        social: false,
+        roleNames: ["ROLE_MANAGER"],
       },
     ]);
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.pathname).toBe("/api/content");
-    expect(requests[0]?.searchParams.get("includeAll")).toBe("true");
+    expect(requests[0]?.pathname).toBe("/api/admin/users");
   });
 
   it("uses generated form login requests for the Spring Security login endpoint", async () => {
@@ -68,7 +69,7 @@ describe("apiRequest", () => {
 
   it("throws a structured client error with backend code and message", async () => {
     server.use(
-      http.get("http://localhost:3000/api/content", () =>
+      http.get("http://localhost:3000/api/admin/users", () =>
         HttpResponse.json(
           {
             error: "ERROR_ACCESS_TOKEN",
@@ -82,7 +83,7 @@ describe("apiRequest", () => {
     );
 
     await expect(
-      apiRequest(() => backendApi.content.getContents({})),
+      apiRequest(() => backendApi.adminSubscribers.getSubscribers()),
     ).rejects.toMatchObject({
       name: "ApiClientError",
       code: "ERROR_ACCESS_TOKEN",

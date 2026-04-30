@@ -30,6 +30,8 @@ type ParsedContentId =
   | { kind: "update"; id: number }
   | { kind: "invalid" };
 
+type ParsedPublished = { kind: "valid"; value: boolean } | { kind: "invalid" };
+
 const CONTENT_ID_PATTERN = /^[1-9]\d*$/;
 
 export const initialSaveContentFormState: SaveContentFormState = {
@@ -73,6 +75,12 @@ export async function saveManagedContentAction(
   let nextTokens: TokenPairResponse = session.tokens;
   let shouldClearSession = false;
 
+  async function persistRotatedTokens() {
+    if (nextTokens !== session.tokens) {
+      writeSessionCookie(await cookies(), nextTokens);
+    }
+  }
+
   try {
     const content = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
@@ -93,9 +101,7 @@ export async function saveManagedContentAction(
       },
     });
 
-    if (nextTokens !== session.tokens) {
-      writeSessionCookie(await cookies(), nextTokens);
-    }
+    await persistRotatedTokens();
     updateContentAfterMutation(content.id);
 
     return {
@@ -106,6 +112,8 @@ export async function saveManagedContentAction(
       contentId: content.id,
     };
   } catch (error) {
+    await persistRotatedTokens();
+
     if (shouldClearSession) {
       clearSessionCookie(await cookies());
     }
@@ -135,9 +143,14 @@ function parseContentUpsertRequest(
   const title = parseRequiredTextField(formData.get("title"));
   const body = parseRequiredTextField(formData.get("body"));
   const category = parseRequiredTextField(formData.get("category"));
-  const published = formData.get("published") === "true";
+  const published = parsePublishedField(formData.get("published"));
 
-  if (title == null || body == null || category == null) {
+  if (
+    title == null ||
+    body == null ||
+    category == null ||
+    published.kind === "invalid"
+  ) {
     return null;
   }
 
@@ -145,7 +158,7 @@ function parseContentUpsertRequest(
     title,
     body,
     category,
-    published,
+    published: published.value,
   };
 }
 
@@ -173,4 +186,16 @@ function parseContentId(value: FormDataEntryValue | null): ParsedContentId {
   }
 
   return { kind: "update", id };
+}
+
+function parsePublishedField(value: FormDataEntryValue | null): ParsedPublished {
+  if (value === "true") {
+    return { kind: "valid", value: true };
+  }
+
+  if (value === "false") {
+    return { kind: "valid", value: false };
+  }
+
+  return { kind: "invalid" };
 }

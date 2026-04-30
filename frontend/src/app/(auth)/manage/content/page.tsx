@@ -2,12 +2,7 @@ import { Suspense } from "react";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageContentClient } from "@/components/manage-content-client";
-import {
-  getManagedContentDetailForRequest,
-  getManagedContentSummariesForRequest,
-} from "@/lib/server/content/content-dal";
-
-const CONTENT_ID_PATTERN = /^[1-9]\d*$/;
+import { loadManagedContentWorkspaceData } from "./workspace-data";
 
 export default function ManageContentPage({
   searchParams,
@@ -33,29 +28,10 @@ async function ManageContentWorkspace({
   searchParams: PageProps<"/manage/content">["searchParams"];
 }) {
   const resolvedSearchParams = await searchParams;
-  const rawContentId = resolvedSearchParams.contentId;
-  const selectedContentId = parseSelectedContentId(rawContentId);
-
-  const [items, selectedDetail] = await Promise.all([
-    getManagedContentSummariesForRequest(),
-    selectedContentId
-      ? getManagedContentDetailForRequest(selectedContentId)
-      : Promise.resolve(null),
-  ]);
+  const { items, selectedDetail } =
+    await loadManagedContentWorkspaceData(resolvedSearchParams);
 
   return (
     <ManageContentClient initialItems={items} selectedDetail={selectedDetail} />
   );
-}
-
-function parseSelectedContentId(
-  value: string | string[] | undefined,
-): string | null {
-  const contentId = Array.isArray(value) ? value[0] : value;
-  if (!contentId || !CONTENT_ID_PATTERN.test(contentId)) {
-    return null;
-  }
-
-  const numericContentId = Number(contentId);
-  return Number.isSafeInteger(numericContentId) ? contentId : null;
 }

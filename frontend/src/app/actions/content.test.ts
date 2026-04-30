@@ -106,7 +106,7 @@ function createContentFormData(values: {
   title?: string | Blob;
   body?: string | Blob;
   category?: string | Blob;
-  published?: string;
+  published?: string | Blob;
 }): FormData {
   const formData = new FormData();
 
@@ -201,6 +201,7 @@ describe("saveManagedContentAction", () => {
       title: "JWT",
       body: "Token lifecycle",
       category: "security",
+      published: "true",
     });
 
     await saveManagedContentAction(initialSaveContentFormState, formData);
@@ -211,6 +212,46 @@ describe("saveManagedContentAction", () => {
     );
     expect(mockedClearSessionCookie).not.toHaveBeenCalled();
     expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(41);
+  });
+
+  it("persists rotated tokens when the refreshed mutation returns a backend error", async () => {
+    const rotatedTokens = {
+      grantType: "Bearer",
+      accessToken: "rotated-access-token",
+      refreshToken: "rotated-refresh-token",
+      accessTokenExpiresIn: 600,
+      refreshTokenExpiresIn: 86400,
+    };
+    mockedExecuteOpenApiRequest.mockImplementationOnce(async (options) => {
+      await options.onTokensRotated?.(rotatedTokens);
+      throw new BackendRequestError("ERROR_ACCESS_DENIED", "No content access.", 403);
+    });
+    const formData = createContentFormData({
+      title: "JWT",
+      body: "Token lifecycle",
+      category: "security",
+      published: "true",
+    });
+
+    const state = await saveManagedContentAction(
+      initialSaveContentFormState,
+      formData,
+    );
+
+    expect(mockedWriteSessionCookie).toHaveBeenCalledWith(
+      cookieStore,
+      rotatedTokens,
+    );
+    expect(mockedClearSessionCookie).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+    expect(state).toEqual({
+      status: "error",
+      message: null,
+      error: {
+        code: "ERROR_ACCESS_DENIED",
+        message: "No content access.",
+      },
+    });
   });
 
   it("updates content with the content id and parsed upsert request", async () => {
@@ -346,6 +387,34 @@ describe("saveManagedContentAction", () => {
     });
   });
 
+  it.each([undefined, "yes", "TRUE", "", new File(["true"], "published.txt")])(
+    "returns a bad request error for an invalid published value %s without calling the backend",
+    async (published) => {
+      const formData = createContentFormData({
+        title: "JWT",
+        body: "Token lifecycle",
+        category: "security",
+        published,
+      });
+
+      const state = await saveManagedContentAction(
+        initialSaveContentFormState,
+        formData,
+      );
+
+      expect(mockedExecuteOpenApiRequest).not.toHaveBeenCalled();
+      expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+      expect(state).toEqual({
+        status: "error",
+        message: null,
+        error: {
+          code: "ERROR_BAD_REQUEST",
+          message: "Content fields are required.",
+        },
+      });
+    },
+  );
+
   it("maps backend request errors to structured action errors", async () => {
     mockedExecuteOpenApiRequest.mockRejectedValue(
       new BackendRequestError("ERROR_ACCESS_DENIED", "No content access.", 403),
@@ -383,6 +452,7 @@ describe("saveManagedContentAction", () => {
       title: "JWT",
       body: "Token lifecycle",
       category: "security",
+      published: "true",
     });
 
     const state = await saveManagedContentAction(
