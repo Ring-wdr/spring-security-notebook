@@ -51,7 +51,9 @@ public class SecurityConfig {
 
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.csrf(csrf -> csrf.disable())
+    return http
+        // Backend APIs authenticate with Bearer tokens in the Authorization header, not cookies.
+        .csrf(csrf -> csrf.disable())
         .cors(Customizer.withDefaults())
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

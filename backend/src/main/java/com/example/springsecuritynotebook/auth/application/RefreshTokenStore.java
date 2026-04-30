@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class RefreshTokenStore {
 
-  private static final long REFRESH_REISSUE_THRESHOLD_SECONDS = 3600L;
   private final StringRedisTemplate stringRedisTemplate;
 
   public RefreshTokenStore(StringRedisTemplate stringRedisTemplate) {
@@ -29,11 +28,6 @@ public class RefreshTokenStore {
   public long getRemainingTtl(String email) {
     Long ttl = stringRedisTemplate.getExpire(buildKey(email), TimeUnit.SECONDS);
     return ttl == null ? -1L : ttl;
-  }
-
-  public boolean shouldReissue(String email) {
-    long ttl = getRemainingTtl(email);
-    return ttl >= 0 && ttl < REFRESH_REISSUE_THRESHOLD_SECONDS;
   }
 
   public void invalidate(String email) {

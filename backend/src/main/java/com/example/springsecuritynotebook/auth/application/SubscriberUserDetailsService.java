@@ -21,7 +21,7 @@ public class SubscriberUserDetailsService implements UserDetailsService {
     Subscriber subscriber =
         subscriberUserLookup
             .findByEmail(username)
-            .orElseThrow(() -> new UsernameNotFoundException("Subscriber not found: " + username));
+            .orElseThrow(() -> new UsernameNotFoundException("Subscriber was not found."));
 
     return SubscriberPrincipal.from(subscriber);
   }

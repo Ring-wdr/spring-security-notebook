@@ -72,17 +72,10 @@ public class AuthService {
     String accessTokenValue =
         jwtService.generateAccessToken(
             refreshedClaims, jwtService.getAccessTokenExpiresInSeconds());
-
-    long remainingTtl = refreshTokenStore.getRemainingTtl(email);
-    String refreshTokenValue = request.refreshToken();
-    long refreshTokenExpiresIn = remainingTtl;
-
-    if (refreshTokenStore.shouldReissue(email)) {
-      refreshTokenValue =
-          jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
-      refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
-      refreshTokenStore.store(email, refreshTokenValue, refreshTokenExpiresIn);
-    }
+    String refreshTokenValue =
+        jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
+    long refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
+    refreshTokenStore.store(email, refreshTokenValue, refreshTokenExpiresIn);
 
     return new TokenPairResponse(
         "Bearer",
@@ -94,12 +87,12 @@ public class AuthService {
 
   public void logout(SubscriberPrincipal principal, String authorizationHeader) {
     String accessToken = extractBearerToken(authorizationHeader);
-    refreshTokenStore.invalidate(principal.getEmail());
     try {
       accessTokenBlocklist.revoke(accessToken, jwtService.getRemainingLifetimeSeconds(accessToken));
     } catch (CustomJwtException ignored) {
-      // The refresh token must still be invalidated even if the access token is at expiry boundary.
+      // Refresh token invalidation should still happen even when access token expiry is ambiguous.
     }
+    refreshTokenStore.invalidate(principal.getEmail());
   }
 
   private String extractBearerToken(String authorizationHeader) {

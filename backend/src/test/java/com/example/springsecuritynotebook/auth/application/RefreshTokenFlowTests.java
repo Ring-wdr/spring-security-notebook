@@ -61,7 +61,7 @@ class RefreshTokenFlowTests {
   }
 
   @Test
-  void expiredAccessAndValidRefreshReturnsNewAccessToken() throws Exception {
+  void expiredAccessAndValidRefreshReturnsNewTokenPair() throws Exception {
     SubscriberPrincipal principal =
         new SubscriberPrincipal(
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
@@ -95,6 +95,10 @@ class RefreshTokenFlowTests {
 
     assertThat(jwtService.validateAccessToken(response.accessToken()).email())
         .isEqualTo("user@example.com");
+    assertThat(response.refreshToken()).isNotEqualTo(refreshToken);
+    assertThat(response.refreshTokenExpiresIn())
+        .isEqualTo(jwtService.getRefreshTokenExpiresInSeconds());
+    assertThat(refreshTokenStore.get("user@example.com")).contains(response.refreshToken());
   }
 
   @Test

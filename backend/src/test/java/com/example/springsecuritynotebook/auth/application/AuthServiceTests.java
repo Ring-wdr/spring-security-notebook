@@ -1,5 +1,6 @@
 package com.example.springsecuritynotebook.auth.application;
 
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -50,7 +51,8 @@ class AuthServiceTests {
 
     authService.logout(principal, "Bearer access-token");
 
-    verify(accessTokenBlocklist).revoke("access-token", 10L);
-    verify(refreshTokenStore).invalidate("user@example.com");
+    var inOrder = inOrder(accessTokenBlocklist, refreshTokenStore);
+    inOrder.verify(accessTokenBlocklist).revoke("access-token", 10L);
+    inOrder.verify(refreshTokenStore).invalidate("user@example.com");
   }
 }
