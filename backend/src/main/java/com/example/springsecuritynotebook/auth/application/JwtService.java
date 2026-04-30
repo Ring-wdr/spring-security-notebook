@@ -5,6 +5,7 @@ import com.example.springsecuritynotebook.shared.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
+  private static final long CLOCK_SKEW_SECONDS = 30L;
   private final JwtProperties jwtProperties;
   private final SecretKey signingKey;
 
@@ -54,8 +56,7 @@ public class JwtService {
       return validateAccessToken(token);
     } catch (CustomJwtException ignored) {
       try {
-        Claims expiredClaims =
-            Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
+        Claims expiredClaims = buildParser().parseSignedClaims(token).getPayload();
         return AccessTokenClaims.from(sanitizeClaims(expiredClaims));
       } catch (ExpiredJwtException exception) {
         return AccessTokenClaims.from(sanitizeClaims(exception.getClaims()));
@@ -78,7 +79,7 @@ public class JwtService {
     try {
       claims = parseClaims(token);
     } catch (JwtException | IllegalArgumentException exception) {
-      throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
     return (String) claims.get("email");
@@ -106,7 +107,15 @@ public class JwtService {
   }
 
   private Claims parseClaims(String token) {
-    return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
+    return buildParser().parseSignedClaims(token).getPayload();
+  }
+
+  private JwtParser buildParser() {
+    return Jwts.parser()
+        .verifyWith(signingKey)
+        .requireIssuer(jwtProperties.issuer())
+        .clockSkewSeconds(CLOCK_SKEW_SECONDS)
+        .build();
   }
 
   private Map<String, Object> sanitizeClaims(Claims claims) {

@@ -54,15 +54,6 @@ public class AuthService {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
-    String storedRefreshToken =
-        refreshTokenStore
-            .get(email)
-            .orElseThrow(() -> new CustomJwtException("ERROR_REFRESH_TOKEN"));
-
-    if (!storedRefreshToken.equals(request.refreshToken())) {
-      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
-    }
-
     Subscriber subscriber =
         subscriberUserLookup
             .findByEmail(email)
@@ -72,16 +63,19 @@ public class AuthService {
     String accessTokenValue =
         jwtService.generateAccessToken(
             refreshedClaims, jwtService.getAccessTokenExpiresInSeconds());
-
-    long remainingTtl = refreshTokenStore.getRemainingTtl(email);
-    String refreshTokenValue = request.refreshToken();
-    long refreshTokenExpiresIn = remainingTtl;
-
-    if (refreshTokenStore.shouldReissue(email)) {
+    String refreshTokenValue =
+        jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
+    long refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
+    if (!refreshTokenStore.rotateIfMatches(
+        email, request.refreshToken(), refreshTokenValue, refreshTokenExpiresIn)) {
       refreshTokenValue =
-          jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
-      refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
-      refreshTokenStore.store(email, refreshTokenValue, refreshTokenExpiresIn);
+          refreshTokenStore
+              .findRetrySuccessor(email, request.refreshToken())
+              .orElseThrow(() -> new CustomJwtException("ERROR_REFRESH_TOKEN"));
+      refreshTokenExpiresIn = refreshTokenStore.getRemainingTtl(email);
+      if (refreshTokenExpiresIn <= 0) {
+        throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+      }
     }
 
     return new TokenPairResponse(
@@ -94,12 +88,12 @@ public class AuthService {
 
   public void logout(SubscriberPrincipal principal, String authorizationHeader) {
     String accessToken = extractBearerToken(authorizationHeader);
-    refreshTokenStore.invalidate(principal.getEmail());
     try {
       accessTokenBlocklist.revoke(accessToken, jwtService.getRemainingLifetimeSeconds(accessToken));
     } catch (CustomJwtException ignored) {
-      // The refresh token must still be invalidated even if the access token is at expiry boundary.
+      // Refresh token invalidation should still happen even when access token expiry is ambiguous.
     }
+    refreshTokenStore.invalidate(principal.getEmail());
   }
 
   private String extractBearerToken(String authorizationHeader) {

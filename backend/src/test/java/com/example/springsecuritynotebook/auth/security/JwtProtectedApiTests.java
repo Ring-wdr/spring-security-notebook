@@ -322,6 +322,28 @@ class JwtProtectedApiTests {
   }
 
   @Test
+  void managerCannotCreateContentWhenPayloadExceedsLengthBounds() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/content")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + managerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "%s",
+                      "body": "%s",
+                      "category": "%s",
+                      "published": true
+                    }
+                    """
+                        .formatted("t".repeat(151), "b".repeat(10001), "c".repeat(81))))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("ERROR_BAD_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request payload is invalid."));
+  }
+
+  @Test
   void userIncludeAllDoesNotReturnDrafts() throws Exception {
     contentRepository.saveAndFlush(
         Content.builder()
