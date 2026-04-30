@@ -305,6 +305,7 @@ describe("ManageContentClient", () => {
   });
 
   it("updates content with the Server Action and refreshes the route after success", async () => {
+    navigation.searchParams = new URLSearchParams("contentId=1");
     contentActions.saveManagedContentAction.mockResolvedValueOnce({
       status: "success",
       message: "Content updated.",
@@ -340,6 +341,7 @@ describe("ManageContentClient", () => {
     await user.click(screen.getByRole("button", { name: "Update content" }));
 
     expect(await screen.findByText("Content updated.")).toBeInTheDocument();
+    expect(navigation.replace).toHaveBeenCalledWith("/manage/content");
     await waitFor(() => expect(navigation.refresh).toHaveBeenCalledTimes(1));
 
     const submittedFormData =
@@ -350,6 +352,56 @@ describe("ManageContentClient", () => {
     expect(submittedFormData.get("body")).toBe("Updated body");
     expect(submittedFormData.get("published")).toBe("false");
     expect(screen.getByRole("button", { name: "Create content" })).toBeEnabled();
+  });
+
+  it("removes only selected content query after update success", async () => {
+    navigation.searchParams = new URLSearchParams("page=2&contentId=1");
+    contentActions.saveManagedContentAction.mockResolvedValueOnce({
+      status: "success",
+      message: "Content updated.",
+      error: null,
+      contentId: 1,
+    });
+    const user = userEvent.setup();
+
+    const initialItems = [
+      {
+        id: 1,
+        title: "JWT Basics",
+        category: "security",
+        published: false,
+      },
+    ];
+
+    const { rerender } = render(
+      <ManageContentClient
+        initialItems={initialItems}
+        selectedDetail={{
+          id: 1,
+          title: "JWT Basics",
+          body: "Old body",
+          category: "security",
+          published: false,
+        }}
+      />,
+    );
+
+    await user.clear(screen.getByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "JWT Refresh");
+    await user.click(screen.getByRole("button", { name: "Update content" }));
+
+    expect(await screen.findByText("Content updated.")).toBeInTheDocument();
+    expect(navigation.replace).toHaveBeenCalledWith("/manage/content?page=2");
+    await waitFor(() => expect(navigation.refresh).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText("Title")).toHaveValue("");
+
+    rerender(
+      <ManageContentClient initialItems={initialItems} selectedDetail={null} />,
+    );
+
+    expect(screen.getByLabelText("Title")).toHaveValue("");
+    expect(screen.getByLabelText("Category")).toHaveValue("security");
+    expect(screen.getByLabelText("Body")).toHaveValue("");
   });
 
   it("refreshes the route after consecutive successful saves", async () => {

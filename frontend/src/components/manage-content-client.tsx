@@ -77,8 +77,14 @@ export function ManageContentClient({
     startTransition(() => {
       setEditor(EMPTY_EDITOR);
     });
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("contentId");
+    const nextPath = params.toString()
+      ? `/manage/content?${params.toString()}`
+      : "/manage/content";
+    router.replace(nextPath);
     router.refresh();
-  }, [router, saveState]);
+  }, [router, saveState, searchParams]);
 
   function selectContent(contentId: number) {
     const params = new URLSearchParams(searchParams.toString());
