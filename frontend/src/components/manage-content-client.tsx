@@ -1,9 +1,23 @@
 "use client";
 
+import type { Route } from "next";
+import {
+  initialSaveContentFormState,
+  saveManagedContentAction,
+} from "@/app/actions/content";
 import { DossierRail, DossierSection, DossierSurface } from "@/components/dossier";
-import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
 import type { ContentDetail, ContentSummary } from "@/lib/types";
-import { type FormEvent, useId, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  startTransition,
+  type FormEvent,
+  useActionState,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 type EditorState = {
   id: number | null;
@@ -23,81 +37,70 @@ const EMPTY_EDITOR: EditorState = {
 
 export function ManageContentClient({
   initialItems,
+  selectedDetail,
 }: {
   initialItems: ContentSummary[];
+  selectedDetail: ContentDetail | null;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const editorFieldPrefix = useId();
+  const [saveState, formAction, saving] = useActionState(
+    saveManagedContentAction,
+    initialSaveContentFormState,
+  );
   const [items, setItems] = useState(initialItems);
-  const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
-  const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<{ code: string; message: string } | null>(null);
+  const [editor, setEditor] = useState<EditorState>(
+    selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR,
+  );
+  const lastHandledSuccess = useRef<typeof saveState | null>(null);
+  const clearSelectedContentQuery = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("contentId");
+    const nextPath = params.toString()
+      ? `/manage/content?${params.toString()}`
+      : "/manage/content";
+    router.replace(nextPath as Route);
+  }, [router, searchParams]);
 
-  async function reloadContents() {
-    const response = await fetchManagedContentSummaries();
-    setItems(response);
-  }
+  useEffect(() => {
+    startTransition(() => {
+      setItems(initialItems);
+    });
+  }, [initialItems]);
 
-  async function selectContent(contentId: number) {
-    try {
-      setLoadingDetailId(contentId);
-      setError(null);
-      const detail = await fetchManagedContentDetail(contentId);
-      setEditor({
-        id: detail.id,
-        title: detail.title,
-        body: detail.body,
-        category: detail.category,
-        published: detail.published,
-      });
-      setMessage(null);
-    } catch (nextError) {
-      setError(toContentError(nextError));
-    } finally {
-      setLoadingDetailId(null);
+  useEffect(() => {
+    startTransition(() => {
+      setEditor(selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR);
+    });
+  }, [selectedDetail]);
+
+  useEffect(() => {
+    if (
+      saveState.status !== "success" ||
+      lastHandledSuccess.current === saveState
+    ) {
+      return;
     }
-  }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const payload = {
-        title: editor.title,
-        body: editor.body,
-        category: editor.category,
-        published: editor.published,
-      };
-
-      if (editor.id == null) {
-        await apiRequest(() =>
-          backendApi.content.createContent({
-            contentUpsertRequest: payload,
-          }),
-        );
-        setMessage("Content created.");
-      } else {
-        const contentId = editor.id;
-        await apiRequest(() =>
-          backendApi.content.updateContent({
-            contentId,
-            contentUpsertRequest: payload,
-          }),
-        );
-        setMessage("Content updated.");
-      }
-
+    lastHandledSuccess.current = saveState;
+    startTransition(() => {
       setEditor(EMPTY_EDITOR);
-      await reloadContents();
-    } catch (nextError) {
-      setError(toContentError(nextError));
-    } finally {
-      setSaving(false);
-    }
+    });
+    clearSelectedContentQuery();
+    router.refresh();
+  }, [clearSelectedContentQuery, router, saveState]);
+
+  function selectContent(contentId: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("contentId", String(contentId));
+    router.replace(`/manage/content?${params.toString()}` as Route);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => formAction(formData));
   }
 
   return (
@@ -115,8 +118,14 @@ export function ManageContentClient({
             </div>
             <form
               className="space-y-4"
-              onSubmit={(event) => void handleSubmit(event)}
+              onSubmit={handleSubmit}
             >
+              <input type="hidden" name="id" value={editor.id ?? ""} />
+              <input
+                type="hidden"
+                name="published"
+                value={editor.published ? "true" : "false"}
+              />
               <div className="space-y-2">
                 <label
                   className="text-sm font-medium"
@@ -126,6 +135,7 @@ export function ManageContentClient({
                 </label>
                 <input
                   id={`${editorFieldPrefix}-title`}
+                  name="title"
                   className="field"
                   value={editor.title}
                   onChange={(event) =>
@@ -145,6 +155,7 @@ export function ManageContentClient({
                 </label>
                 <input
                   id={`${editorFieldPrefix}-category`}
+                  name="category"
                   className="field"
                   value={editor.category}
                   onChange={(event) =>
@@ -164,6 +175,7 @@ export function ManageContentClient({
                 </label>
                 <textarea
                   id={`${editorFieldPrefix}-body`}
+                  name="body"
                   className="field min-h-48"
                   value={editor.body}
                   onChange={(event) =>
@@ -198,18 +210,23 @@ export function ManageContentClient({
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditor(EMPTY_EDITOR)}
+                  onClick={() => {
+                    setEditor(EMPTY_EDITOR);
+                    clearSelectedContentQuery();
+                  }}
                 >
                   Reset
                 </button>
               </div>
-              {message ? (
-                <p className="text-sm text-[color:var(--accent)]">{message}</p>
+              {saveState.message ? (
+                <p className="text-sm text-[color:var(--accent)]">
+                  {saveState.message}
+                </p>
               ) : null}
-              {error ? (
+              {saveState.error ? (
                 <div className="text-sm text-[color:var(--warn)]">
-                  <p className="font-semibold">{error.code}</p>
-                  <p className="mt-1">{error.message}</p>
+                  <p className="font-semibold">{saveState.error.code}</p>
+                  <p className="mt-1">{saveState.error.message}</p>
                 </div>
               ) : null}
             </form>
@@ -228,16 +245,12 @@ export function ManageContentClient({
                   key={item.id}
                   type="button"
                   className="rounded-[22px] border border-[color:var(--dossier-border)] bg-[color:var(--dossier-surface-strong)] px-4 py-4 text-left transition hover:border-[color:var(--dossier-border-strong)]"
-                  onClick={() => void selectContent(item.id)}
+                  onClick={() => selectContent(item.id)}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">{item.title}</p>
                     <span className="badge">
-                      {loadingDetailId === item.id
-                        ? "Loading..."
-                        : item.published
-                          ? "Published"
-                          : "Draft"}
+                      {item.published ? "Published" : "Draft"}
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-[color:var(--dossier-muted-foreground)]">
@@ -253,54 +266,12 @@ export function ManageContentClient({
   );
 }
 
-function toContentError(error: unknown) {
-  if (error instanceof ApiClientError) {
-    return {
-      code: error.code,
-      message: error.displayMessage,
-    };
-  }
-
+function toEditorState(detail: ContentDetail): EditorState {
   return {
-    code: "ERROR_CONTENT",
-    message: "Unable to complete the content request.",
+    id: detail.id,
+    title: detail.title,
+    body: detail.body,
+    category: detail.category,
+    published: detail.published,
   };
-}
-
-async function fetchManagedContentSummaries(): Promise<ContentSummary[]> {
-  return fetchManagedContent("/api/manage/content");
-}
-
-async function fetchManagedContentDetail(id: number): Promise<ContentDetail> {
-  return fetchManagedContent(`/api/manage/content/${id}`);
-}
-
-async function fetchManagedContent<T>(path: string): Promise<T> {
-  const response = await fetch(path, { cache: "no-store" });
-
-  if (!response.ok) {
-    await extractManagedContentError(response);
-  }
-
-  return (await response.json()) as T;
-}
-
-async function extractManagedContentError(response: Response): Promise<never> {
-  try {
-    const data = (await response.json()) as { error?: string; message?: string };
-    throw new ApiClientError(
-      data.error ?? `HTTP_${response.status}`,
-      data.message ?? `HTTP_${response.status}`,
-      response.status,
-    );
-  } catch (error) {
-    if (error instanceof ApiClientError) {
-      throw error;
-    }
-    throw new ApiClientError(
-      `HTTP_${response.status}`,
-      `HTTP_${response.status}`,
-      response.status,
-    );
-  }
 }

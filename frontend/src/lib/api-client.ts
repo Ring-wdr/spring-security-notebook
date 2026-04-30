@@ -4,7 +4,6 @@ import {
   AdminSubscriberControllerApi,
   AuthControllerApi,
   Configuration,
-  ContentControllerApi,
   ResponseError,
 } from "@/generated/openapi/src";
 
@@ -38,7 +37,6 @@ const browserApiConfiguration = new Configuration({
 export const backendApi = {
   adminSubscribers: new AdminSubscriberControllerApi(browserApiConfiguration),
   auth: new AuthControllerApi(browserApiConfiguration),
-  content: new ContentControllerApi(browserApiConfiguration),
 };
 
 export async function apiRequest<T>(

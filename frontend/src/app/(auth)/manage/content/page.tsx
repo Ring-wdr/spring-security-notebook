@@ -2,9 +2,11 @@ import { Suspense } from "react";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageContentClient } from "@/components/manage-content-client";
-import { getManagedContentSummariesForRequest } from "@/lib/server/content/content-dal";
+import { loadManagedContentWorkspaceData } from "./workspace-data";
 
-export default function ManageContentPage() {
+export default function ManageContentPage({
+  searchParams,
+}: PageProps<"/manage/content">) {
   return (
     <Suspense
       fallback={
@@ -15,13 +17,21 @@ export default function ManageContentPage() {
         />
       }
     >
-      <ManageContentWorkspace />
+      <ManageContentWorkspace searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function ManageContentWorkspace() {
-  const items = await getManagedContentSummariesForRequest();
+async function ManageContentWorkspace({
+  searchParams,
+}: {
+  searchParams: PageProps<"/manage/content">["searchParams"];
+}) {
+  const resolvedSearchParams = await searchParams;
+  const { items, selectedDetail } =
+    await loadManagedContentWorkspaceData(resolvedSearchParams);
 
-  return <ManageContentClient initialItems={items} />;
+  return (
+    <ManageContentClient initialItems={items} selectedDetail={selectedDetail} />
+  );
 }

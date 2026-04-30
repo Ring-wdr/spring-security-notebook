@@ -13,7 +13,7 @@ export function ContentFeedView({ items }: ContentFeedViewProps) {
     <DossierSurface
       eyebrow="Subscriber Content"
       title="Protected content index"
-      intro="This subscriber-only feed is loaded through the JWT-protected GET /api/content endpoint. Each entry stays lightweight so the view reads like a protected document index rather than a gallery."
+      intro="This subscriber-only feed is loaded on the server through the JWT-protected content boundary. Each entry stays lightweight so the view reads like a protected document index rather than a gallery."
     >
       <DossierSection heading="Published content feed">
         <div className="space-y-3">

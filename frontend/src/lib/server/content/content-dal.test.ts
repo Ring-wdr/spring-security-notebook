@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { forbidden } from "next/navigation";
+
 import {
   getContentDetailForRequest,
+  getManagedContentDetailForRequest,
   getManagedContentSummariesForRequest,
   getPublishedContentSummariesForRequest,
 } from "./content-dal";
 import {
+  unsafeGetCachedManagedContentDetailAfterAuthorization,
   unsafeGetCachedManagedContentSummariesAfterAuthorization,
   unsafeGetCachedPublishedContentDetailAfterAuthorization,
   unsafeGetCachedPublishedContentSummariesAfterAuthorization,
@@ -30,6 +34,7 @@ vi.mock("../session", () => ({
 }));
 
 vi.mock("./cached-content", () => ({
+  unsafeGetCachedManagedContentDetailAfterAuthorization: vi.fn(),
   unsafeGetCachedManagedContentSummariesAfterAuthorization: vi.fn(),
   unsafeGetCachedPublishedContentDetailAfterAuthorization: vi.fn(),
   unsafeGetCachedPublishedContentSummariesAfterAuthorization: vi.fn(),
@@ -44,6 +49,7 @@ const mockedRequireSession = vi.mocked(requireSession);
 const mockedFetchProtectedOpenApi = vi.mocked(fetchProtectedOpenApi);
 const mockedHasPublishedToken = vi.mocked(hasContentPublishedServiceToken);
 const mockedHasManagementToken = vi.mocked(hasContentManagementServiceToken);
+const mockedForbidden = vi.mocked(forbidden);
 const mockedCachedPublishedList = vi.mocked(
   unsafeGetCachedPublishedContentSummariesAfterAuthorization,
 );
@@ -52,6 +58,9 @@ const mockedCachedPublishedDetail = vi.mocked(
 );
 const mockedCachedManagedList = vi.mocked(
   unsafeGetCachedManagedContentSummariesAfterAuthorization,
+);
+const mockedCachedManagedDetail = vi.mocked(
+  unsafeGetCachedManagedContentDetailAfterAuthorization,
 );
 
 const managerSession = {
@@ -84,6 +93,13 @@ describe("content DAL", () => {
       published: true,
     });
     mockedCachedManagedList.mockResolvedValue([]);
+    mockedCachedManagedDetail.mockResolvedValue({
+      id: 9,
+      title: "Draft",
+      body: "Manager body",
+      category: "security",
+      published: false,
+    });
   });
 
   it("uses the cached published list when the service token is configured", async () => {
@@ -120,5 +136,62 @@ describe("content DAL", () => {
 
     expect(mockedCachedManagedList).not.toHaveBeenCalled();
     expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
+  });
+
+  it("uses the cached management detail when the management token is configured", async () => {
+    mockedHasManagementToken.mockReturnValue(true);
+    mockedCachedManagedDetail.mockResolvedValue({
+      id: 9,
+      title: "Draft",
+      body: "Manager body",
+      category: "security",
+      published: false,
+    });
+
+    const detail = await getManagedContentDetailForRequest("9");
+
+    expect(detail.title).toBe("Draft");
+    expect(mockedCachedManagedDetail).toHaveBeenCalledWith("9");
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the session-backed management detail when the management token is missing", async () => {
+    mockedHasManagementToken.mockReturnValue(false);
+    mockedFetchProtectedOpenApi.mockResolvedValue({
+      id: 9,
+      title: "Draft",
+      body: "Manager body",
+      category: "security",
+      published: false,
+    });
+
+    await getManagedContentDetailForRequest("9");
+
+    const [returnTo, , operation] = mockedFetchProtectedOpenApi.mock.calls[0];
+    const getContent = vi.fn();
+
+    await operation({ getContent });
+
+    expect(mockedRequireSession).toHaveBeenCalledWith(
+      "/manage/content?contentId=9",
+    );
+    expect(mockedCachedManagedDetail).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
+    expect(returnTo).toBe("/manage/content?contentId=9");
+    expect(getContent).toHaveBeenCalledWith({
+      contentId: 9,
+      includeAll: true,
+    });
+  });
+
+  it("rejects invalid management detail ids before session or backend work", async () => {
+    await expect(getManagedContentDetailForRequest("abc")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedRequireSession).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+    expect(mockedCachedManagedDetail).not.toHaveBeenCalled();
   });
 });
