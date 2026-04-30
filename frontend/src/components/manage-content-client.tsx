@@ -12,6 +12,7 @@ import {
   startTransition,
   type FormEvent,
   useActionState,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -53,6 +54,14 @@ export function ManageContentClient({
     selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR,
   );
   const lastHandledSuccess = useRef<typeof saveState | null>(null);
+  const clearSelectedContentQuery = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("contentId");
+    const nextPath = params.toString()
+      ? `/manage/content?${params.toString()}`
+      : "/manage/content";
+    router.replace(nextPath as Route);
+  }, [router, searchParams]);
 
   useEffect(() => {
     startTransition(() => {
@@ -78,14 +87,9 @@ export function ManageContentClient({
     startTransition(() => {
       setEditor(EMPTY_EDITOR);
     });
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("contentId");
-    const nextPath = params.toString()
-      ? `/manage/content?${params.toString()}`
-      : "/manage/content";
-    router.replace(nextPath as Route);
+    clearSelectedContentQuery();
     router.refresh();
-  }, [router, saveState, searchParams]);
+  }, [clearSelectedContentQuery, router, saveState]);
 
   function selectContent(contentId: number) {
     const params = new URLSearchParams(searchParams.toString());
@@ -206,7 +210,10 @@ export function ManageContentClient({
                 <button
                   type="button"
                   className="button-secondary"
-                  onClick={() => setEditor(EMPTY_EDITOR)}
+                  onClick={() => {
+                    setEditor(EMPTY_EDITOR);
+                    clearSelectedContentQuery();
+                  }}
                 >
                   Reset
                 </button>

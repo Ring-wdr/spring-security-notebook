@@ -7,6 +7,8 @@ import {
   getManagedContentSummariesForRequest,
 } from "@/lib/server/content/content-dal";
 
+const CONTENT_ID_PATTERN = /^[1-9]\d*$/;
+
 export default function ManageContentPage({
   searchParams,
 }: PageProps<"/manage/content">) {
@@ -32,9 +34,7 @@ async function ManageContentWorkspace({
 }) {
   const resolvedSearchParams = await searchParams;
   const rawContentId = resolvedSearchParams.contentId;
-  const selectedContentId = Array.isArray(rawContentId)
-    ? rawContentId[0]
-    : rawContentId;
+  const selectedContentId = parseSelectedContentId(rawContentId);
 
   const [items, selectedDetail] = await Promise.all([
     getManagedContentSummariesForRequest(),
@@ -46,4 +46,16 @@ async function ManageContentWorkspace({
   return (
     <ManageContentClient initialItems={items} selectedDetail={selectedDetail} />
   );
+}
+
+function parseSelectedContentId(
+  value: string | string[] | undefined,
+): string | null {
+  const contentId = Array.isArray(value) ? value[0] : value;
+  if (!contentId || !CONTENT_ID_PATTERN.test(contentId)) {
+    return null;
+  }
+
+  const numericContentId = Number(contentId);
+  return Number.isSafeInteger(numericContentId) ? contentId : null;
 }

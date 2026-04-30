@@ -17,6 +17,8 @@ import {
   hasContentPublishedServiceToken,
 } from "./service-tokens";
 
+const CONTENT_ID_PATTERN = /^[1-9]\d*$/;
+
 export async function getPublishedContentSummariesForRequest(
   returnTo: string,
 ): Promise<ContentSummary[]> {
@@ -84,7 +86,14 @@ export async function getManagedContentSummariesForRequest(): Promise<
 export async function getManagedContentDetailForRequest(
   id: string,
 ): Promise<ContentDetail> {
-  const returnTo = `/manage/content?contentId=${id}`;
+  const contentId = parsePositiveContentId(id);
+  if (contentId == null) {
+    forbidden();
+  }
+
+  const returnTo = `/manage/content?${new URLSearchParams({
+    contentId: String(contentId),
+  }).toString()}`;
   const session = await requireSession(returnTo);
 
   if (!canManageContent(session)) {
@@ -97,11 +106,20 @@ export async function getManagedContentDetailForRequest(
       ({ content }) => content,
       (content) =>
         content.getContent({
-          contentId: Number(id),
+          contentId,
           includeAll: true,
         }),
     );
   }
 
-  return unsafeGetCachedManagedContentDetailAfterAuthorization(id);
+  return unsafeGetCachedManagedContentDetailAfterAuthorization(String(contentId));
+}
+
+function parsePositiveContentId(id: string): number | null {
+  if (!CONTENT_ID_PATTERN.test(id)) {
+    return null;
+  }
+
+  const contentId = Number(id);
+  return Number.isSafeInteger(contentId) ? contentId : null;
 }

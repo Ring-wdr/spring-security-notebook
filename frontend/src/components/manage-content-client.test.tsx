@@ -472,6 +472,7 @@ describe("ManageContentClient", () => {
   });
 
   it("resets the editor back to the empty create state", async () => {
+    navigation.searchParams = new URLSearchParams("page=2&contentId=1");
     const user = userEvent.setup();
 
     render(
@@ -503,5 +504,6 @@ describe("ManageContentClient", () => {
     expect(screen.getByLabelText("Body")).toHaveValue("");
     expect(screen.getByRole("checkbox")).toBeChecked();
     expect(screen.getByRole("button", { name: "Create content" })).toBeInTheDocument();
+    expect(navigation.replace).toHaveBeenCalledWith("/manage/content?page=2");
   });
 });

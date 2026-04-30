@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { forbidden } from "next/navigation";
 
 import type { ContentUpsertRequest } from "@/generated/openapi/src/models";
@@ -7,10 +8,15 @@ import { createDisplayError, type DisplayError } from "@/lib/auth-errors";
 import { updateContentAfterMutation } from "@/lib/server/content/content-cache-invalidation";
 import { canManageContent } from "@/lib/server/content/permissions";
 import {
+  clearSessionCookie,
+  writeSessionCookie,
+} from "@/lib/server/session-cookie";
+import {
   BackendRequestError,
   executeOpenApiRequest,
 } from "@/lib/server/openapi-client";
 import { getApiBaseUrl, requireSession } from "@/lib/server/session";
+import type { TokenPairResponse } from "@/lib/types";
 
 export type SaveContentFormState = {
   status: "idle" | "success" | "error";
@@ -64,6 +70,9 @@ export async function saveManagedContentAction(
     };
   }
 
+  let nextTokens: TokenPairResponse = session.tokens;
+  let shouldClearSession = false;
+
   try {
     const content = await executeOpenApiRequest({
       baseUrl: getApiBaseUrl(),
@@ -76,8 +85,17 @@ export async function saveManagedContentAction(
               contentId: parsedId.id,
               contentUpsertRequest,
             }),
+      onTokensRotated(rotatedTokens) {
+        nextTokens = rotatedTokens;
+      },
+      onUnauthorized() {
+        shouldClearSession = true;
+      },
     });
 
+    if (nextTokens !== session.tokens) {
+      writeSessionCookie(await cookies(), nextTokens);
+    }
     updateContentAfterMutation(content.id);
 
     return {
@@ -88,6 +106,10 @@ export async function saveManagedContentAction(
       contentId: content.id,
     };
   } catch (error) {
+    if (shouldClearSession) {
+      clearSessionCookie(await cookies());
+    }
+
     if (error instanceof BackendRequestError) {
       return {
         status: "error",

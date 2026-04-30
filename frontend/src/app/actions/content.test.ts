@@ -4,6 +4,10 @@ import { forbidden } from "next/navigation";
 
 import { updateContentAfterMutation } from "@/lib/server/content/content-cache-invalidation";
 import {
+  clearSessionCookie,
+  writeSessionCookie,
+} from "@/lib/server/session-cookie";
+import {
   BackendRequestError,
   executeOpenApiRequest,
 } from "@/lib/server/openapi-client";
@@ -14,12 +18,18 @@ import {
   saveManagedContentAction,
 } from "./content";
 
+const cookieStore = vi.hoisted(() => ({}));
+
 vi.mock("server-only", () => ({}));
 
 vi.mock("next/navigation", () => ({
   forbidden: vi.fn(() => {
     throw new Error("forbidden");
   }),
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => cookieStore),
 }));
 
 vi.mock("@/lib/server/session", () => ({
@@ -52,6 +62,11 @@ vi.mock("@/lib/server/content/content-cache-invalidation", () => ({
   updateContentAfterMutation: vi.fn(),
 }));
 
+vi.mock("@/lib/server/session-cookie", () => ({
+  clearSessionCookie: vi.fn(),
+  writeSessionCookie: vi.fn(),
+}));
+
 const managerSession = {
   tokens: {
     grantType: "Bearer",
@@ -80,6 +95,8 @@ const mockedRequireSession = vi.mocked(requireSession);
 const mockedGetApiBaseUrl = vi.mocked(getApiBaseUrl);
 const mockedExecuteOpenApiRequest = vi.mocked(executeOpenApiRequest);
 const mockedUpdateContentAfterMutation = vi.mocked(updateContentAfterMutation);
+const mockedWriteSessionCookie = vi.mocked(writeSessionCookie);
+const mockedClearSessionCookie = vi.mocked(clearSessionCookie);
 const mockedForbidden = vi.mocked(forbidden);
 const fakeCreateContent = vi.fn();
 const fakeUpdateContent = vi.fn();
@@ -156,12 +173,44 @@ describe("saveManagedContentAction", () => {
     });
     expect(fakeUpdateContent).not.toHaveBeenCalled();
     expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(41);
+    expect(mockedWriteSessionCookie).not.toHaveBeenCalled();
     expect(state).toEqual({
       status: "success",
       message: "Content created.",
       error: null,
       contentId: 41,
     });
+  });
+
+  it("persists rotated tokens after a successful refreshed mutation", async () => {
+    const rotatedTokens = {
+      grantType: "Bearer",
+      accessToken: "rotated-access-token",
+      refreshToken: "rotated-refresh-token",
+      accessTokenExpiresIn: 600,
+      refreshTokenExpiresIn: 86400,
+    };
+    mockedExecuteOpenApiRequest.mockImplementationOnce(async (options) => {
+      await options.onTokensRotated?.(rotatedTokens);
+      return options.operation({
+        createContent: fakeCreateContent,
+        updateContent: fakeUpdateContent,
+      });
+    });
+    const formData = createContentFormData({
+      title: "JWT",
+      body: "Token lifecycle",
+      category: "security",
+    });
+
+    await saveManagedContentAction(initialSaveContentFormState, formData);
+
+    expect(mockedWriteSessionCookie).toHaveBeenCalledWith(
+      cookieStore,
+      rotatedTokens,
+    );
+    expect(mockedClearSessionCookie).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).toHaveBeenCalledWith(41);
   });
 
   it("updates content with the content id and parsed upsert request", async () => {
@@ -322,6 +371,36 @@ describe("saveManagedContentAction", () => {
       },
     });
     expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+    expect(mockedClearSessionCookie).not.toHaveBeenCalled();
+  });
+
+  it("clears the session cookie when refresh fails during the backend request", async () => {
+    mockedExecuteOpenApiRequest.mockImplementationOnce(async (options) => {
+      await options.onUnauthorized?.();
+      throw new BackendRequestError("ERROR_UNAUTHORIZED", "Unauthorized.", 401);
+    });
+    const formData = createContentFormData({
+      title: "JWT",
+      body: "Token lifecycle",
+      category: "security",
+    });
+
+    const state = await saveManagedContentAction(
+      initialSaveContentFormState,
+      formData,
+    );
+
+    expect(mockedClearSessionCookie).toHaveBeenCalledWith(cookieStore);
+    expect(mockedWriteSessionCookie).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+    expect(state).toEqual({
+      status: "error",
+      message: null,
+      error: {
+        code: "ERROR_UNAUTHORIZED",
+        message: "Unauthorized.",
+      },
+    });
   });
 
   it("maps unknown backend errors to the generic content action error without updating caches", async () => {

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { forbidden } from "next/navigation";
+
 import {
   getContentDetailForRequest,
   getManagedContentDetailForRequest,
@@ -47,6 +49,7 @@ const mockedRequireSession = vi.mocked(requireSession);
 const mockedFetchProtectedOpenApi = vi.mocked(fetchProtectedOpenApi);
 const mockedHasPublishedToken = vi.mocked(hasContentPublishedServiceToken);
 const mockedHasManagementToken = vi.mocked(hasContentManagementServiceToken);
+const mockedForbidden = vi.mocked(forbidden);
 const mockedCachedPublishedList = vi.mocked(
   unsafeGetCachedPublishedContentSummariesAfterAuthorization,
 );
@@ -179,5 +182,16 @@ describe("content DAL", () => {
       contentId: 9,
       includeAll: true,
     });
+  });
+
+  it("rejects invalid management detail ids before session or backend work", async () => {
+    await expect(getManagedContentDetailForRequest("abc")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedRequireSession).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+    expect(mockedCachedManagedDetail).not.toHaveBeenCalled();
   });
 });
