@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { LearnPageSkeleton } from "@/app/(public)/learn/page";
+import { LearnPageSkeleton } from "@/components/learn-page-skeleton";
 import {
   describeProtectedRouteAccess,
   type LearningSnapshot,
