@@ -2,9 +2,14 @@ import { Suspense } from "react";
 
 import { GuardPanel } from "@/components/guard-panel";
 import { ManageContentClient } from "@/components/manage-content-client";
-import { getManagedContentSummariesForRequest } from "@/lib/server/content/content-dal";
+import {
+  getManagedContentDetailForRequest,
+  getManagedContentSummariesForRequest,
+} from "@/lib/server/content/content-dal";
 
-export default function ManageContentPage() {
+export default function ManageContentPage({
+  searchParams,
+}: PageProps<"/manage/content">) {
   return (
     <Suspense
       fallback={
@@ -15,13 +20,30 @@ export default function ManageContentPage() {
         />
       }
     >
-      <ManageContentWorkspace />
+      <ManageContentWorkspace searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function ManageContentWorkspace() {
-  const items = await getManagedContentSummariesForRequest();
+async function ManageContentWorkspace({
+  searchParams,
+}: {
+  searchParams: PageProps<"/manage/content">["searchParams"];
+}) {
+  const resolvedSearchParams = await searchParams;
+  const rawContentId = resolvedSearchParams.contentId;
+  const selectedContentId = Array.isArray(rawContentId)
+    ? rawContentId[0]
+    : rawContentId;
 
-  return <ManageContentClient initialItems={items} />;
+  const [items, selectedDetail] = await Promise.all([
+    getManagedContentSummariesForRequest(),
+    selectedContentId
+      ? getManagedContentDetailForRequest(selectedContentId)
+      : Promise.resolve(null),
+  ]);
+
+  return (
+    <ManageContentClient initialItems={items} selectedDetail={selectedDetail} />
+  );
 }

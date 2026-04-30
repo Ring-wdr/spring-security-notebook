@@ -23,8 +23,10 @@ const EMPTY_EDITOR: EditorState = {
 
 export function ManageContentClient({
   initialItems,
+  selectedDetail: _selectedDetail,
 }: {
   initialItems: ContentSummary[];
+  selectedDetail?: ContentDetail | null;
 }) {
   const editorFieldPrefix = useId();
   const [items, setItems] = useState(initialItems);
