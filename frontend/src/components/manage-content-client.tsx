@@ -3,7 +3,14 @@
 import { DossierRail, DossierSection, DossierSurface } from "@/components/dossier";
 import { ApiClientError, apiRequest, backendApi } from "@/lib/api-client";
 import type { ContentDetail, ContentSummary } from "@/lib/types";
-import { type FormEvent, useId, useState } from "react";
+import {
+  startTransition,
+  type FormEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 type EditorState = {
   id: number | null;
@@ -29,6 +36,8 @@ export function ManageContentClient({
   selectedDetail?: ContentDetail | null;
 }) {
   const editorFieldPrefix = useId();
+  const selectedDetailId = selectedDetail?.id;
+  const lastSyncedDetailId = useRef(selectedDetailId);
   const [items, setItems] = useState(initialItems);
   const [editor, setEditor] = useState<EditorState>(
     selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR,
@@ -37,6 +46,22 @@ export function ManageContentClient({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
+
+  useEffect(() => {
+    if (selectedDetail == null) {
+      lastSyncedDetailId.current = undefined;
+      return;
+    }
+
+    if (lastSyncedDetailId.current === selectedDetail.id) {
+      return;
+    }
+
+    lastSyncedDetailId.current = selectedDetail.id;
+    startTransition(() => {
+      setEditor(toEditorState(selectedDetail));
+    });
+  }, [selectedDetail]);
 
   async function reloadContents() {
     const response = await fetchManagedContentSummaries();

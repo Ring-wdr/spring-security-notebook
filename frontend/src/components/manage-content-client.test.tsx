@@ -110,6 +110,57 @@ describe("ManageContentClient", () => {
     expect(screen.getByRole("button", { name: "Update content" })).toBeEnabled();
   });
 
+  it("updates the editor when the server-selected content detail changes", () => {
+    const initialItems = [
+      {
+        id: 1,
+        title: "JWT Basics",
+        category: "security",
+        published: true,
+      },
+      {
+        id: 2,
+        title: "Filter Chain",
+        category: "filters",
+        published: false,
+      },
+    ];
+
+    const { rerender } = render(
+      <ManageContentClient
+        initialItems={initialItems}
+        selectedDetail={{
+          id: 1,
+          title: "JWT Basics",
+          body: "Understand token parsing.",
+          category: "security",
+          published: false,
+        }}
+      />,
+    );
+
+    rerender(
+      <ManageContentClient
+        initialItems={initialItems}
+        selectedDetail={{
+          id: 2,
+          title: "Filter Chain",
+          body: "Place authentication filters deliberately.",
+          category: "filters",
+          published: true,
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Title")).toHaveValue("Filter Chain");
+    expect(screen.getByLabelText("Category")).toHaveValue("filters");
+    expect(screen.getByLabelText("Body")).toHaveValue(
+      "Place authentication filters deliberately.",
+    );
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByRole("button", { name: "Update content" })).toBeEnabled();
+  });
+
   it("creates content and refreshes the content list", async () => {
     const contents = [
       {
