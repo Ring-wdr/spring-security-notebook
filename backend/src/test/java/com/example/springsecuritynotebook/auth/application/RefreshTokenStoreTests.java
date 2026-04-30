@@ -33,5 +33,19 @@ class RefreshTokenStoreTests {
     assertThat(firstRotation).isTrue();
     assertThat(secondRotation).isFalse();
     assertThat(refreshTokenStore.get("rotate@example.com")).contains("rotated-token");
+    assertThat(refreshTokenStore.findRetrySuccessor("rotate@example.com", "original-token"))
+        .contains("rotated-token");
+  }
+
+  @Test
+  void retrySuccessorBecomesInvalidAfterNextRotation() {
+    refreshTokenStore.store("rotate@example.com", "original-token", 120L);
+    refreshTokenStore.rotateIfMatches(
+        "rotate@example.com", "original-token", "rotated-token", 300L);
+    refreshTokenStore.rotateIfMatches(
+        "rotate@example.com", "rotated-token", "next-rotated-token", 300L);
+
+    assertThat(refreshTokenStore.findRetrySuccessor("rotate@example.com", "original-token"))
+        .isEmpty();
   }
 }

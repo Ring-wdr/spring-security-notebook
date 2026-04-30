@@ -67,7 +67,7 @@ class RefreshTokenFlowTests {
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
     String expiredAccessToken =
-        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -30);
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -61);
     String refreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
@@ -108,7 +108,7 @@ class RefreshTokenFlowTests {
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
     String expiredAccessToken =
-        jwtService.generateAccessToken(originalPrincipal.toAccessTokenClaims(), -30);
+        jwtService.generateAccessToken(originalPrincipal.toAccessTokenClaims(), -61);
     String refreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
@@ -207,7 +207,7 @@ class RefreshTokenFlowTests {
             "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
 
     String expiredAccessToken =
-        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -30);
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -61);
     String refreshToken = jwtService.generateRefreshToken("user@example.com", 3500);
     refreshTokenStore.store("user@example.com", refreshToken, 3500);
 
@@ -230,6 +230,59 @@ class RefreshTokenFlowTests {
     assertThat(response.refreshTokenExpiresIn())
         .isEqualTo(jwtService.getRefreshTokenExpiresInSeconds());
     assertThat(refreshTokenStore.get("user@example.com")).contains(response.refreshToken());
+  }
+
+  @Test
+  void refreshRetryWithOriginalTokenReturnsCurrentRotatedRefreshToken() throws Exception {
+    SubscriberPrincipal principal =
+        new SubscriberPrincipal(
+            "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
+
+    String expiredAccessToken =
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -61);
+    String originalRefreshToken =
+        jwtService.generateRefreshToken(
+            "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
+    refreshTokenStore.store(
+        "user@example.com", originalRefreshToken, jwtService.getRefreshTokenExpiresInSeconds());
+
+    TokenPairResponse firstResponse = refresh(expiredAccessToken, originalRefreshToken);
+    TokenPairResponse retryResponse = refresh(expiredAccessToken, originalRefreshToken);
+
+    assertThat(retryResponse.refreshToken()).isEqualTo(firstResponse.refreshToken());
+    assertThat(retryResponse.refreshTokenExpiresIn()).isPositive();
+    assertThat(refreshTokenStore.get("user@example.com")).contains(firstResponse.refreshToken());
+  }
+
+  @Test
+  void originalRefreshTokenIsRejectedAfterNextSuccessfulRotation() throws Exception {
+    SubscriberPrincipal principal =
+        new SubscriberPrincipal(
+            "user@example.com", "", "user", false, java.util.List.of("ROLE_USER"));
+
+    String expiredAccessToken =
+        jwtService.generateAccessToken(principal.toAccessTokenClaims(), -61);
+    String originalRefreshToken =
+        jwtService.generateRefreshToken(
+            "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
+    refreshTokenStore.store(
+        "user@example.com", originalRefreshToken, jwtService.getRefreshTokenExpiresInSeconds());
+
+    TokenPairResponse firstResponse = refresh(expiredAccessToken, originalRefreshToken);
+    TokenPairResponse secondResponse = refresh(expiredAccessToken, firstResponse.refreshToken());
+
+    assertThat(secondResponse.refreshToken()).isNotEqualTo(firstResponse.refreshToken());
+
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
+                .contentType("application/json")
+                .content(
+                    objectMapper.writeValueAsString(new RefreshTokenRequest(originalRefreshToken))))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_REFRESH_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Refresh token is invalid or expired."));
   }
 
   @Test
@@ -267,5 +320,21 @@ class RefreshTokenFlowTests {
     TokenPairResponse response =
         objectMapper.readValue(result.getResponse().getContentAsString(), TokenPairResponse.class);
     return response.accessToken();
+  }
+
+  private TokenPairResponse refresh(String accessToken, String refreshToken) throws Exception {
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/auth/refresh")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .contentType("application/json")
+                    .content(
+                        objectMapper.writeValueAsString(new RefreshTokenRequest(refreshToken))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    return objectMapper.readValue(
+        result.getResponse().getContentAsString(), TokenPairResponse.class);
   }
 }

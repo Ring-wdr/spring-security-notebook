@@ -80,6 +80,8 @@ class AuthServiceTests {
     when(refreshTokenStore.rotateIfMatches(
             "user@example.com", "refresh-token", "new-refresh", 86400L))
         .thenReturn(false);
+    when(refreshTokenStore.findRetrySuccessor("user@example.com", "refresh-token"))
+        .thenReturn(Optional.empty());
 
     org.assertj.core.api.Assertions.assertThatThrownBy(
             () ->
@@ -87,5 +89,38 @@ class AuthServiceTests {
                     "Bearer access-token", new RefreshTokenRequest("refresh-token")))
         .isInstanceOf(CustomJwtException.class)
         .hasMessage("ERROR_REFRESH_TOKEN");
+  }
+
+  @Test
+  void refreshReturnsCurrentRotatedTokenWhenRequestIsRetried() {
+    AuthService authService =
+        new AuthService(jwtService, refreshTokenStore, accessTokenBlocklist, subscriberUserLookup);
+    AccessTokenClaims accessClaims =
+        new AccessTokenClaims("user@example.com", "user", false, List.of("ROLE_USER"));
+    Subscriber subscriber =
+        Subscriber.builder().email("user@example.com").password("encoded").nickname("user").build();
+    subscriber.addRole(SubscriberRole.ROLE_USER);
+
+    when(accessTokenBlocklist.isRevoked("access-token")).thenReturn(false);
+    when(jwtService.readAccessClaimsAllowExpired("access-token")).thenReturn(accessClaims);
+    when(jwtService.validateRefreshTokenEmail("refresh-token")).thenReturn("user@example.com");
+    when(subscriberUserLookup.findByEmail("user@example.com")).thenReturn(Optional.of(subscriber));
+    when(jwtService.getAccessTokenExpiresInSeconds()).thenReturn(600L);
+    when(jwtService.generateAccessToken(accessClaims, 600L)).thenReturn("new-access-token");
+    when(jwtService.getRefreshTokenExpiresInSeconds()).thenReturn(86400L);
+    when(jwtService.generateRefreshToken("user@example.com", 86400L)).thenReturn("new-refresh");
+    when(refreshTokenStore.rotateIfMatches(
+            "user@example.com", "refresh-token", "new-refresh", 86400L))
+        .thenReturn(false);
+    when(refreshTokenStore.findRetrySuccessor("user@example.com", "refresh-token"))
+        .thenReturn(Optional.of("current-refresh-token"));
+    when(refreshTokenStore.getRemainingTtl("user@example.com")).thenReturn(48L);
+
+    TokenPairResponse response =
+        authService.refresh("Bearer access-token", new RefreshTokenRequest("refresh-token"));
+
+    org.assertj.core.api.Assertions.assertThat(response.refreshToken())
+        .isEqualTo("current-refresh-token");
+    org.assertj.core.api.Assertions.assertThat(response.refreshTokenExpiresIn()).isEqualTo(48L);
   }
 }

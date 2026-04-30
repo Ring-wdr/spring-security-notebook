@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RefreshTokenStore {
 
+  private static final long RETRY_GRACE_SECONDS = 60L;
   private static final DefaultRedisScript<Long> ROTATE_IF_MATCHES_SCRIPT =
       new DefaultRedisScript<>(
           """
@@ -19,6 +20,7 @@ public class RefreshTokenStore {
             return 0
           end
           redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+          redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[4])
           return 1
           """,
           Long.class);
@@ -49,11 +51,22 @@ public class RefreshTokenStore {
     Long result =
         stringRedisTemplate.execute(
             ROTATE_IF_MATCHES_SCRIPT,
-            List.of(buildKey(email)),
+            List.of(buildKey(email), buildRetryKey(email, expectedRefreshToken)),
             expectedRefreshToken,
             newRefreshToken,
-            String.valueOf(expiresInSeconds));
+            String.valueOf(expiresInSeconds),
+            String.valueOf(RETRY_GRACE_SECONDS));
     return Long.valueOf(1L).equals(result);
+  }
+
+  public Optional<String> findRetrySuccessor(String email, String expectedRefreshToken) {
+    String retrySuccessor =
+        stringRedisTemplate.opsForValue().get(buildRetryKey(email, expectedRefreshToken));
+    if (retrySuccessor == null) {
+      return Optional.empty();
+    }
+
+    return get(email).filter(retrySuccessor::equals);
   }
 
   public void invalidate(String email) {
@@ -62,5 +75,9 @@ public class RefreshTokenStore {
 
   private String buildKey(String email) {
     return "auth:refresh:" + email;
+  }
+
+  private String buildRetryKey(String email, String refreshToken) {
+    return "auth:refresh:retry:" + email + ":" + refreshToken;
   }
 }

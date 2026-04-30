@@ -68,7 +68,14 @@ public class AuthService {
     long refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
     if (!refreshTokenStore.rotateIfMatches(
         email, request.refreshToken(), refreshTokenValue, refreshTokenExpiresIn)) {
-      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+      refreshTokenValue =
+          refreshTokenStore
+              .findRetrySuccessor(email, request.refreshToken())
+              .orElseThrow(() -> new CustomJwtException("ERROR_REFRESH_TOKEN"));
+      refreshTokenExpiresIn = refreshTokenStore.getRemainingTtl(email);
+      if (refreshTokenExpiresIn <= 0) {
+        throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+      }
     }
 
     return new TokenPairResponse(
