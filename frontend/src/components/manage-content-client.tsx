@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import {
   initialSaveContentFormState,
   saveManagedContentAction,
@@ -82,14 +83,14 @@ export function ManageContentClient({
     const nextPath = params.toString()
       ? `/manage/content?${params.toString()}`
       : "/manage/content";
-    router.replace(nextPath);
+    router.replace(nextPath as Route);
     router.refresh();
   }, [router, saveState, searchParams]);
 
   function selectContent(contentId: number) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("contentId", String(contentId));
-    router.replace(`/manage/content?${params.toString()}`);
+    router.replace(`/manage/content?${params.toString()}` as Route);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
