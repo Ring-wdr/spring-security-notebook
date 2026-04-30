@@ -86,9 +86,9 @@ const fakeUpdateContent = vi.fn();
 
 function createContentFormData(values: {
   id?: string;
-  title?: string;
-  body?: string;
-  category?: string;
+  title?: string | Blob;
+  body?: string | Blob;
+  category?: string | Blob;
   published?: string;
 }): FormData {
   const formData = new FormData();
@@ -220,7 +220,7 @@ describe("saveManagedContentAction", () => {
     });
   });
 
-  it.each(["abc", "NaN", "12.5", "0", "-7"])(
+  it.each(["abc", "NaN", "12.5", "0", "-7", "1e2", "0x10", " 23 "])(
     "returns a bad request error for an invalid submitted id %s without calling the backend",
     async (id) => {
       const formData = createContentFormData({
@@ -247,6 +247,30 @@ describe("saveManagedContentAction", () => {
       });
     },
   );
+
+  it("returns a bad request error for file values submitted as text fields without calling the backend", async () => {
+    const formData = createContentFormData({
+      title: new File(["not text"], "title.txt", { type: "text/plain" }),
+      body: "Token lifecycle",
+      category: "security",
+    });
+
+    const state = await saveManagedContentAction(
+      initialSaveContentFormState,
+      formData,
+    );
+
+    expect(mockedExecuteOpenApiRequest).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+    expect(state).toEqual({
+      status: "error",
+      message: null,
+      error: {
+        code: "ERROR_BAD_REQUEST",
+        message: "Content fields are required.",
+      },
+    });
+  });
 
   it("maps backend request errors to structured action errors", async () => {
     mockedExecuteOpenApiRequest.mockRejectedValue(

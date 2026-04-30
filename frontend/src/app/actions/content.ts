@@ -24,6 +24,8 @@ type ParsedContentId =
   | { kind: "update"; id: number }
   | { kind: "invalid" };
 
+const CONTENT_ID_PATTERN = /^[1-9]\d*$/;
+
 export const initialSaveContentFormState: SaveContentFormState = {
   status: "idle",
   message: null,
@@ -108,12 +110,12 @@ export async function saveManagedContentAction(
 function parseContentUpsertRequest(
   formData: FormData,
 ): ContentUpsertRequest | null {
-  const title = String(formData.get("title") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  const category = String(formData.get("category") ?? "").trim();
+  const title = parseRequiredTextField(formData.get("title"));
+  const body = parseRequiredTextField(formData.get("body"));
+  const category = parseRequiredTextField(formData.get("category"));
   const published = formData.get("published") === "true";
 
-  if (!title || !body || !category) {
+  if (title == null || body == null || category == null) {
     return null;
   }
 
@@ -125,9 +127,22 @@ function parseContentUpsertRequest(
   };
 }
 
+function parseRequiredTextField(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = value.trim();
+  return text ? text : null;
+}
+
 function parseContentId(value: FormDataEntryValue | null): ParsedContentId {
   if (value == null || value === "") {
     return { kind: "create" };
+  }
+
+  if (typeof value !== "string" || !CONTENT_ID_PATTERN.test(value)) {
+    return { kind: "invalid" };
   }
 
   const id = Number(value);
