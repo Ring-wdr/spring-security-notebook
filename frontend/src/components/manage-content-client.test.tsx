@@ -194,6 +194,40 @@ describe("ManageContentClient", () => {
     expect(screen.getByRole("button", { name: "Update content" })).toBeEnabled();
   });
 
+  it("resets the editor when the server-selected content detail is cleared", () => {
+    const initialItems = [
+      {
+        id: 1,
+        title: "JWT Basics",
+        category: "security",
+        published: true,
+      },
+    ];
+
+    const { rerender } = render(
+      <ManageContentClient
+        initialItems={initialItems}
+        selectedDetail={{
+          id: 1,
+          title: "JWT Basics",
+          body: "Understand token parsing.",
+          category: "tokens",
+          published: false,
+        }}
+      />,
+    );
+
+    rerender(
+      <ManageContentClient initialItems={initialItems} selectedDetail={null} />,
+    );
+
+    expect(screen.getByLabelText("Title")).toHaveValue("");
+    expect(screen.getByLabelText("Category")).toHaveValue("security");
+    expect(screen.getByLabelText("Body")).toHaveValue("");
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByRole("button", { name: "Create content" })).toBeEnabled();
+  });
+
   it("syncs the content registry when server-rendered items change", () => {
     const { rerender } = render(
       <ManageContentClient
@@ -316,6 +350,51 @@ describe("ManageContentClient", () => {
     expect(submittedFormData.get("body")).toBe("Updated body");
     expect(submittedFormData.get("published")).toBe("false");
     expect(screen.getByRole("button", { name: "Create content" })).toBeEnabled();
+  });
+
+  it("refreshes the route after consecutive successful saves", async () => {
+    contentActions.saveManagedContentAction
+      .mockResolvedValueOnce({
+        status: "success",
+        message: "Content updated.",
+        error: null,
+        contentId: 1,
+      })
+      .mockResolvedValueOnce({
+        status: "success",
+        message: "Content updated.",
+        error: null,
+        contentId: 1,
+      });
+    const user = userEvent.setup();
+
+    render(
+      <ManageContentClient
+        initialItems={[]}
+        selectedDetail={{
+          id: 1,
+          title: "JWT Basics",
+          body: "Old body",
+          category: "security",
+          published: true,
+        }}
+      />,
+    );
+
+    await user.clear(screen.getByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "JWT Refresh");
+    await user.clear(screen.getByLabelText("Body"));
+    await user.type(screen.getByLabelText("Body"), "Updated body");
+    await user.click(screen.getByRole("button", { name: "Update content" }));
+
+    await waitFor(() => expect(navigation.refresh).toHaveBeenCalledTimes(1));
+
+    await user.type(screen.getByLabelText("Title"), "JWT Refresh Again");
+    await user.type(screen.getByLabelText("Body"), "Updated body again");
+    await user.click(screen.getByRole("button", { name: "Create content" }));
+
+    await waitFor(() => expect(navigation.refresh).toHaveBeenCalledTimes(2));
+    expect(contentActions.saveManagedContentAction).toHaveBeenCalledTimes(2);
   });
 
   it("shows a structured error when saving fails", async () => {

@@ -13,6 +13,7 @@ import {
   useActionState,
   useEffect,
   useId,
+  useRef,
   useState,
 } from "react";
 
@@ -50,6 +51,7 @@ export function ManageContentClient({
   const [editor, setEditor] = useState<EditorState>(
     selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR,
   );
+  const lastHandledSuccess = useRef<typeof saveState | null>(null);
 
   useEffect(() => {
     startTransition(() => {
@@ -58,21 +60,25 @@ export function ManageContentClient({
   }, [initialItems]);
 
   useEffect(() => {
-    if (selectedDetail) {
-      startTransition(() => {
-        setEditor(toEditorState(selectedDetail));
-      });
-    }
+    startTransition(() => {
+      setEditor(selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR);
+    });
   }, [selectedDetail]);
 
   useEffect(() => {
-    if (saveState.status === "success") {
-      startTransition(() => {
-        setEditor(EMPTY_EDITOR);
-      });
-      router.refresh();
+    if (
+      saveState.status !== "success" ||
+      lastHandledSuccess.current === saveState
+    ) {
+      return;
     }
-  }, [router, saveState.status]);
+
+    lastHandledSuccess.current = saveState;
+    startTransition(() => {
+      setEditor(EMPTY_EDITOR);
+    });
+    router.refresh();
+  }, [router, saveState]);
 
   function selectContent(contentId: number) {
     const params = new URLSearchParams(searchParams.toString());
