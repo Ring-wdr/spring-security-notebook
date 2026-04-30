@@ -162,6 +162,19 @@ describe("content DAL", () => {
     expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
   });
 
+  it("rejects published detail before cached service-token fetch when the session lacks read roles", async () => {
+    mockedRequireSession.mockResolvedValue(noRoleSession);
+    mockedHasPublishedToken.mockReturnValue(true);
+
+    await expect(getContentDetailForRequest("7", "/content/7")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(mockedForbidden).toHaveBeenCalledOnce();
+    expect(mockedCachedPublishedDetail).not.toHaveBeenCalled();
+    expect(mockedFetchProtectedOpenApi).not.toHaveBeenCalled();
+  });
+
   it("falls back to the session-backed management list when the management token is missing", async () => {
     mockedHasManagementToken.mockReturnValue(false);
 
