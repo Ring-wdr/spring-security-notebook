@@ -184,6 +184,19 @@ describe("content DAL", () => {
     expect(mockedFetchProtectedOpenApi).toHaveBeenCalledOnce();
   });
 
+  it("uses the supplied management list returnTo for session-backed fetches", async () => {
+    mockedHasManagementToken.mockReturnValue(false);
+
+    await getManagedContentSummariesForRequest("/manage/content?contentId=9");
+
+    const [returnTo] = mockedFetchProtectedOpenApi.mock.calls[0];
+
+    expect(mockedRequireSession).toHaveBeenCalledWith(
+      "/manage/content?contentId=9",
+    );
+    expect(returnTo).toBe("/manage/content?contentId=9");
+  });
+
   it("rejects managed content before cached service-token fetch when the session is not a manager", async () => {
     mockedRequireSession.mockResolvedValue(userSession);
     mockedHasManagementToken.mockReturnValue(true);

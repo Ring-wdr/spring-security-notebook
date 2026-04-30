@@ -63,10 +63,10 @@ export async function getContentDetailForRequest(
   return unsafeGetCachedPublishedContentDetailAfterAuthorization(id);
 }
 
-export async function getManagedContentSummariesForRequest(): Promise<
-  ContentSummary[]
-> {
-  const session = await requireSession("/manage/content");
+export async function getManagedContentSummariesForRequest(
+  returnTo = "/manage/content",
+): Promise<ContentSummary[]> {
+  const session = await requireSession(returnTo);
 
   if (!canManageContent(session)) {
     forbidden();
@@ -74,7 +74,7 @@ export async function getManagedContentSummariesForRequest(): Promise<
 
   if (!hasContentManagementServiceToken()) {
     return fetchProtectedOpenApi(
-      "/manage/content",
+      returnTo,
       ({ content }) => content,
       (content) => content.getContents({ includeAll: true }),
     );
