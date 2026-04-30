@@ -71,7 +71,7 @@ class RefreshTokenFlowTests {
     String refreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
-    refreshTokenStore.store(
+    storeRefreshToken(
         "user@example.com", refreshToken, jwtService.getRefreshTokenExpiresInSeconds());
 
     MvcResult result =
@@ -112,7 +112,7 @@ class RefreshTokenFlowTests {
     String refreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
-    refreshTokenStore.store(
+    storeRefreshToken(
         "user@example.com", refreshToken, jwtService.getRefreshTokenExpiresInSeconds());
 
     Subscriber subscriber = subscriberRepository.findByEmail("user@example.com").orElseThrow();
@@ -209,7 +209,7 @@ class RefreshTokenFlowTests {
     String expiredAccessToken =
         jwtService.generateAccessToken(principal.toAccessTokenClaims(), -61);
     String refreshToken = jwtService.generateRefreshToken("user@example.com", 3500);
-    refreshTokenStore.store("user@example.com", refreshToken, 3500);
+    storeRefreshToken("user@example.com", refreshToken, 3500);
 
     MvcResult result =
         mockMvc
@@ -243,7 +243,7 @@ class RefreshTokenFlowTests {
     String originalRefreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
-    refreshTokenStore.store(
+    storeRefreshToken(
         "user@example.com", originalRefreshToken, jwtService.getRefreshTokenExpiresInSeconds());
 
     TokenPairResponse firstResponse = refresh(expiredAccessToken, originalRefreshToken);
@@ -265,7 +265,7 @@ class RefreshTokenFlowTests {
     String originalRefreshToken =
         jwtService.generateRefreshToken(
             "user@example.com", jwtService.getRefreshTokenExpiresInSeconds());
-    refreshTokenStore.store(
+    storeRefreshToken(
         "user@example.com", originalRefreshToken, jwtService.getRefreshTokenExpiresInSeconds());
 
     TokenPairResponse firstResponse = refresh(expiredAccessToken, originalRefreshToken);
@@ -280,6 +280,18 @@ class RefreshTokenFlowTests {
                 .contentType("application/json")
                 .content(
                     objectMapper.writeValueAsString(new RefreshTokenRequest(originalRefreshToken))))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.error").value("ERROR_REFRESH_TOKEN"))
+        .andExpect(jsonPath("$.message").value("Refresh token is invalid or expired."));
+
+    mockMvc
+        .perform(
+            post("/api/auth/refresh")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + expiredAccessToken)
+                .contentType("application/json")
+                .content(
+                    objectMapper.writeValueAsString(
+                        new RefreshTokenRequest(secondResponse.refreshToken()))))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error").value("ERROR_REFRESH_TOKEN"))
         .andExpect(jsonPath("$.message").value("Refresh token is invalid or expired."));
@@ -336,5 +348,10 @@ class RefreshTokenFlowTests {
 
     return objectMapper.readValue(
         result.getResponse().getContentAsString(), TokenPairResponse.class);
+  }
+
+  private void storeRefreshToken(String email, String refreshToken, long expiresInSeconds) {
+    RefreshTokenClaims refreshClaims = jwtService.validateRefreshToken(refreshToken);
+    refreshTokenStore.store(email, refreshClaims.familyId(), refreshToken, expiresInSeconds);
   }
 }

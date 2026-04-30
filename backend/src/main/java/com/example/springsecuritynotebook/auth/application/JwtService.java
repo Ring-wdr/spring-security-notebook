@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class JwtService {
 
   private static final long CLOCK_SKEW_SECONDS = 30L;
+  private static final String REFRESH_TOKEN_FAMILY_ID_CLAIM = "fid";
   private final JwtProperties jwtProperties;
   private final SecretKey signingKey;
 
@@ -71,10 +72,15 @@ public class JwtService {
   }
 
   public String generateRefreshToken(String email, long expiresInSeconds) {
-    return generateToken(Map.of("email", email), expiresInSeconds);
+    return generateRefreshToken(email, UUID.randomUUID().toString(), expiresInSeconds);
   }
 
-  public String validateRefreshTokenEmail(String token) {
+  public String generateRefreshToken(String email, String familyId, long expiresInSeconds) {
+    return generateToken(
+        Map.of("email", email, REFRESH_TOKEN_FAMILY_ID_CLAIM, familyId), expiresInSeconds);
+  }
+
+  public RefreshTokenClaims validateRefreshToken(String token) {
     Claims claims;
     try {
       claims = parseClaims(token);
@@ -82,7 +88,17 @@ public class JwtService {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
-    return (String) claims.get("email");
+    String email = (String) claims.get("email");
+    String familyId = (String) claims.get(REFRESH_TOKEN_FAMILY_ID_CLAIM);
+    if (email == null || email.isBlank() || familyId == null || familyId.isBlank()) {
+      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+    }
+
+    return new RefreshTokenClaims(email, familyId);
+  }
+
+  public String validateRefreshTokenEmail(String token) {
+    return validateRefreshToken(token).email();
   }
 
   public long getAccessTokenExpiresInSeconds() {

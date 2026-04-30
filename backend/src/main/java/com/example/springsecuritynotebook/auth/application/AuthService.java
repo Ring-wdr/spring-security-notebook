@@ -26,14 +26,22 @@ public class AuthService {
 
   public TokenPairResponse issueTokens(SubscriberPrincipal principal) {
     TokenPairResponse tokenPair = jwtService.generateTokenPair(principal);
+    RefreshTokenClaims refreshClaims = jwtService.validateRefreshToken(tokenPair.refreshToken());
     refreshTokenStore.store(
-        principal.getEmail(), tokenPair.refreshToken(), tokenPair.refreshTokenExpiresIn());
+        principal.getEmail(),
+        refreshClaims.familyId(),
+        tokenPair.refreshToken(),
+        tokenPair.refreshTokenExpiresIn());
     return tokenPair;
   }
 
   public TokenPairResponse refresh(String authorizationHeader, RefreshTokenRequest request) {
     String accessToken = extractBearerToken(authorizationHeader);
-    if (accessTokenBlocklist.isRevoked(accessToken)) {
+    try {
+      if (accessTokenBlocklist.isRevoked(accessToken)) {
+        throw new CustomJwtException("ERROR_ACCESS_TOKEN");
+      }
+    } catch (TokenStateException exception) {
       throw new CustomJwtException("ERROR_ACCESS_TOKEN");
     }
 
@@ -43,14 +51,14 @@ public class AuthService {
       throw new CustomJwtException("ERROR_ACCESS_TOKEN");
     }
 
-    String refreshEmail;
+    RefreshTokenClaims refreshClaims;
     try {
-      refreshEmail = jwtService.validateRefreshTokenEmail(request.refreshToken());
+      refreshClaims = jwtService.validateRefreshToken(request.refreshToken());
     } catch (CustomJwtException exception) {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
-    if (!email.equals(refreshEmail)) {
+    if (!email.equals(refreshClaims.email())) {
       throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
@@ -64,18 +72,32 @@ public class AuthService {
         jwtService.generateAccessToken(
             refreshedClaims, jwtService.getAccessTokenExpiresInSeconds());
     String refreshTokenValue =
-        jwtService.generateRefreshToken(email, jwtService.getRefreshTokenExpiresInSeconds());
+        jwtService.generateRefreshToken(
+            email, refreshClaims.familyId(), jwtService.getRefreshTokenExpiresInSeconds());
     long refreshTokenExpiresIn = jwtService.getRefreshTokenExpiresInSeconds();
-    if (!refreshTokenStore.rotateIfMatches(
-        email, request.refreshToken(), refreshTokenValue, refreshTokenExpiresIn)) {
-      refreshTokenValue =
-          refreshTokenStore
-              .findRetrySuccessor(email, request.refreshToken())
-              .orElseThrow(() -> new CustomJwtException("ERROR_REFRESH_TOKEN"));
-      refreshTokenExpiresIn = refreshTokenStore.getRemainingTtl(email);
-      if (refreshTokenExpiresIn <= 0) {
-        throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+    try {
+      if (!refreshTokenStore.rotateIfMatches(
+          email,
+          refreshClaims.familyId(),
+          request.refreshToken(),
+          refreshTokenValue,
+          refreshTokenExpiresIn)) {
+        refreshTokenValue =
+            refreshTokenStore
+                .findRetrySuccessor(email, refreshClaims.familyId(), request.refreshToken())
+                .orElseGet(
+                    () -> {
+                      invalidateRefreshFamilyIfTracked(
+                          email, refreshClaims, request.refreshToken());
+                      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+                    });
+        refreshTokenExpiresIn = refreshTokenStore.getRemainingTtl(email, refreshClaims.familyId());
+        if (refreshTokenExpiresIn <= 0) {
+          throw new CustomJwtException("ERROR_REFRESH_TOKEN");
+        }
       }
+    } catch (TokenStateException exception) {
+      throw new CustomJwtException("ERROR_REFRESH_TOKEN");
     }
 
     return new TokenPairResponse(
@@ -84,6 +106,13 @@ public class AuthService {
         refreshTokenValue,
         jwtService.getAccessTokenExpiresInSeconds(),
         refreshTokenExpiresIn);
+  }
+
+  private void invalidateRefreshFamilyIfTracked(
+      String email, RefreshTokenClaims refreshClaims, String refreshToken) {
+    if (refreshTokenStore.hasTokenState(email, refreshClaims.familyId(), refreshToken)) {
+      refreshTokenStore.invalidateFamily(email, refreshClaims.familyId());
+    }
   }
 
   public void logout(SubscriberPrincipal principal, String authorizationHeader) {
