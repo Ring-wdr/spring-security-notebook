@@ -23,14 +23,16 @@ const EMPTY_EDITOR: EditorState = {
 
 export function ManageContentClient({
   initialItems,
-  selectedDetail: _selectedDetail,
+  selectedDetail,
 }: {
   initialItems: ContentSummary[];
   selectedDetail?: ContentDetail | null;
 }) {
   const editorFieldPrefix = useId();
   const [items, setItems] = useState(initialItems);
-  const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
+  const [editor, setEditor] = useState<EditorState>(
+    selectedDetail ? toEditorState(selectedDetail) : EMPTY_EDITOR,
+  );
   const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -46,13 +48,7 @@ export function ManageContentClient({
       setLoadingDetailId(contentId);
       setError(null);
       const detail = await fetchManagedContentDetail(contentId);
-      setEditor({
-        id: detail.id,
-        title: detail.title,
-        body: detail.body,
-        category: detail.category,
-        published: detail.published,
-      });
+      setEditor(toEditorState(detail));
       setMessage(null);
     } catch (nextError) {
       setError(toContentError(nextError));
@@ -253,6 +249,16 @@ export function ManageContentClient({
       </div>
     </DossierSurface>
   );
+}
+
+function toEditorState(detail: ContentDetail): EditorState {
+  return {
+    id: detail.id,
+    title: detail.title,
+    body: detail.body,
+    category: detail.category,
+    published: detail.published,
+  };
 }
 
 function toContentError(error: unknown) {
