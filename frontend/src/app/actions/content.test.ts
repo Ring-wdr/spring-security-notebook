@@ -85,7 +85,7 @@ const fakeCreateContent = vi.fn();
 const fakeUpdateContent = vi.fn();
 
 function createContentFormData(values: {
-  id?: string;
+  id?: string | Blob;
   title?: string | Blob;
   body?: string | Blob;
   category?: string | Blob;
@@ -272,6 +272,31 @@ describe("saveManagedContentAction", () => {
     });
   });
 
+  it("returns a bad request error for file values submitted as the id without calling the backend", async () => {
+    const formData = createContentFormData({
+      id: new File(["23"], "id.txt", { type: "text/plain" }),
+      title: "JWT",
+      body: "Token lifecycle",
+      category: "security",
+    });
+
+    const state = await saveManagedContentAction(
+      initialSaveContentFormState,
+      formData,
+    );
+
+    expect(mockedExecuteOpenApiRequest).not.toHaveBeenCalled();
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+    expect(state).toEqual({
+      status: "error",
+      message: null,
+      error: {
+        code: "ERROR_BAD_REQUEST",
+        message: "Content id is invalid.",
+      },
+    });
+  });
+
   it("maps backend request errors to structured action errors", async () => {
     mockedExecuteOpenApiRequest.mockRejectedValue(
       new BackendRequestError("ERROR_ACCESS_DENIED", "No content access.", 403),
@@ -294,6 +319,31 @@ describe("saveManagedContentAction", () => {
       error: {
         code: "ERROR_ACCESS_DENIED",
         message: "No content access.",
+      },
+    });
+    expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
+  });
+
+  it("maps unknown backend errors to the generic content action error without updating caches", async () => {
+    mockedExecuteOpenApiRequest.mockRejectedValue(new Error("network down"));
+    const formData = createContentFormData({
+      title: "JWT",
+      body: "Token lifecycle",
+      category: "security",
+      published: "true",
+    });
+
+    const state = await saveManagedContentAction(
+      initialSaveContentFormState,
+      formData,
+    );
+
+    expect(state).toEqual({
+      status: "error",
+      message: null,
+      error: {
+        code: "ERROR_CONTENT",
+        message: "ERROR_CONTENT",
       },
     });
     expect(mockedUpdateContentAfterMutation).not.toHaveBeenCalled();
